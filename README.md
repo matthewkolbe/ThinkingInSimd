@@ -30,7 +30,7 @@ There are several types of operations we want to be able to perfrom on our data:
 
 ## The type of AVX acceleration we're targeting
 
-Each calculation I mentioned can be done serially. One interesting thing about all of them is that they can be written as AVX functions. That is, instead of calculating one implied volatility at a time, we can use the VCL to compose a function that calculates 16 at once. So, the goal will be to calculate the desired values in chunks of 16, rather than one at a time. [`vec_black_scholes.hpp`](https://github.com/ThinkingInSimd/vec_black_scholes.hpp) features the implementations of these functions, whereas [`black_scholes.hpp`](https://github.com/ThinkingInSimd/black_scholes.hpp) has the non-vectorized implementations.
+Each calculation I mentioned can be done serially. One interesting thing about all of them is that they can be written as AVX functions. That is, instead of calculating one implied volatility at a time, we can use the VCL to compose a function that calculates 16 at once. So, the goal will be to calculate the desired values in chunks of 16, rather than one at a time. [`vec_black_scholes.hpp`](vec_black_scholes.hpp) features the implementations of these functions, whereas [`black_scholes.hpp`](black_scholes.hpp) has the non-vectorized implementations.
 
 ## The data structures
 
