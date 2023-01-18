@@ -110,7 +110,7 @@ I would like to see how all data structures perform in all compute paradigms. Ad
 
 Results are encouraging. `bs512` is slightly more performant than `bsv` for a long task, but similar or worse for short/medium ones. Depending on your perferences, it seems likely that `bsv`, the much easier and more maintainable structure is also the best from a performance point of view. Also interesting to note that the Naive `bsv` is the fastest for the Short calculation. This is because the compilers knows how to optimize absolute value sums of two float vectors much better than two `Vect16f` vectors. 
 
-One other thing of note is how across-the-board bad `bs` is. `scatter` and `gather` combined with cache thrashing is just too much overhead. Even when you use `bs` naively, the results aren't encouraging, because the compiler cannot autovectorize it easily.
+One other thing of note is how across-the-board bad `bs` is. `scatter` and `gather` combined with cache thrashing is just too much overhead. Even when you use `bs` naively, the results are bad, because the compiler cannot autovectorize it easily.
 
 
 ### Footnotes
