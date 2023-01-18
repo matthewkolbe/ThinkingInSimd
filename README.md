@@ -86,7 +86,7 @@ Although I will not be showing this here, `bsv512` has the additional complicati
 I would like to see how all data structures perform in all compute paradigms. Additionally, I would like to see how it performs single threaded versus using 32 threads via OpenMP (OMP). I chose a value of `N=51200` because it's approprately large for practical uses, and it divides all my partitions evenly. I use [ubench](https://github.com/sheredom/ubench.h) as the micorbenchmarking framework. It's a header-only library that I embedded in this repo, so it should work seamlessly if you'd like to clone this and run the benchmarks yourself. Here are my systems specs:
 
 <p style="text-align:center;">
-<img src="images/specs.png" width="300">
+<img src="images/specs.png" width="500">
 
 
 | Syntax      | Long (IV)   | Medium (Price) | Short (Abs sum) | 
