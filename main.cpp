@@ -129,6 +129,7 @@ UBENCH_EX(iv, naive_bsv) {
 UBENCH_EX(iv, naive_bs) {
     std::srand(1);
     alignas(4096) bs* __restrict__ data      = new bs[SIZE_N];
+    
 
     for(auto i = 0; i < SIZE_N; ++i) {
         data[i].ul = 100.0;
@@ -548,7 +549,7 @@ UBENCH_EX(vol_edge, naive_bsv) {
 
     UBENCH_DO_BENCHMARK() {
         for(auto i = 0; i < SIZE_N; ++i) {
-            data.theo[i] = std::abs(data.iv[i] - data.theo[i]);
+            data.theo[i] = std::abs(data.iv[i] - data.vol[i]);
         }
     }
 }
@@ -653,31 +654,23 @@ UBENCH_EX(vol_edge, avx_unrolled_bsv512) {
     }
 
     UBENCH_DO_BENCHMARK() {
-        Vec16f v0, vi0;
-        Vec16f v1, vi1;
-        Vec16f v2, vi2;
-        Vec16f v3, vi3;
+        Vec16f v0;
+        Vec16f v1;
+        Vec16f v2;
+        Vec16f v3;
         for(auto i = 0; i < SIZE_N/16; i += 4) {
-            v0 = data.vol[i];
+            v0 = data.vol[i]  ;
             v1 = data.vol[i+1];
             v2 = data.vol[i+2];
             v3 = data.vol[i+3];
-            vi0 = data.iv[i];
-            vi1 = data.iv[i+1];
-            vi2 = data.iv[i+2];
-            vi3 = data.iv[i+3];
-            v0 -= vi0; 
-            v1 -= vi1;
-            v2 -= vi2;
-            v3 -= vi3;
-            vi0 = abs(v0);
-            vi1 = abs(v1);
-            vi2 = abs(v2);
-            vi3 = abs(v3);
-            data.theo[i] = vi0;
-            data.theo[i+1] = vi1;
-            data.theo[i+2] = vi2;
-            data.theo[i+3] = vi3;
+            v0 -= data.iv[i];
+            v1 -= data.iv[i+1];
+            v2 -= data.iv[i+2];
+            v3 -= data.iv[i+3];
+            data.theo[i] =   abs(v0);
+            data.theo[i+1] = abs(v1);
+            data.theo[i+2] = abs(v2);
+            data.theo[i+3] = abs(v3);
         }
     }
 }
