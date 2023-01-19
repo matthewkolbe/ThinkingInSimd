@@ -94,6 +94,8 @@ I would like to see how all data structures perform in all compute paradigms. Ad
 <p style="text-align:center;">
 <img src="images/specs.png" width="500">
 
+Compiled with `g++ main.cpp -std=c++20 -O3 -lm -lstdc++ -march=native -fopenmp`.
+
 
 | Syntax      | Long (IV)   | Medium (Price) | Short (Abs sum) | 
 | :---------- | ----------- | ----------- | ----------- |
