@@ -7,6 +7,7 @@
 #include "vcl/vectorclass.h"
 #include <omp.h>
 #include <cassert>
+#include <immintrin.h>
 
 // compile with: g++ main.cpp -std=c++20 -O3 -lm -lstdc++ -march=native -fopenmp 
 
@@ -53,14 +54,14 @@ struct alignas(64) bsv {
     }
 
 
-    alignas(4) float* ul;
-    alignas(4) float* tte;
-    alignas(4) float* strike;
-    alignas(4) float* rate;
-    alignas(4) float* iv;
-    alignas(4) float* vol;
-    alignas(4) float* px;
-    alignas(4) float* theo;
+    alignas(4) float* __restrict__ ul;
+    alignas(4) float* __restrict__ tte;
+    alignas(4) float* __restrict__ strike;
+    alignas(4) float* __restrict__ rate;
+    alignas(4) float* __restrict__ iv;
+    alignas(4) float* __restrict__ vol;
+    alignas(4) float* __restrict__ px;
+    alignas(4) float* __restrict__ theo;
 };
 
 struct alignas(64) bsv512 {
@@ -88,14 +89,14 @@ struct alignas(64) bsv512 {
     }
 
 
-    alignas(64) Vec16f* ul;
-    alignas(64) Vec16f* tte;
-    alignas(64) Vec16f* strike;
-    alignas(64) Vec16f* rate;
-    alignas(64) Vec16f* iv;
-    alignas(64) Vec16f* vol;
-    alignas(64) Vec16f* px;
-    alignas(64) Vec16f* theo;
+    alignas(64) Vec16f* __restrict__ ul;
+    alignas(64) Vec16f* __restrict__ tte;
+    alignas(64) Vec16f* __restrict__ strike;
+    alignas(64) Vec16f* __restrict__ rate;
+    alignas(64) Vec16f* __restrict__ iv;
+    alignas(64) Vec16f* __restrict__ vol;
+    alignas(64) Vec16f* __restrict__ px;
+    alignas(64) Vec16f* __restrict__ theo;
 };
 
 UBENCH_MAIN();
@@ -127,7 +128,7 @@ UBENCH_EX(iv, naive_bsv) {
 
 UBENCH_EX(iv, naive_bs) {
     std::srand(1);
-    alignas(4096) auto data      = new bs[SIZE_N];
+    alignas(4096) bs* __restrict__ data      = new bs[SIZE_N];
 
     for(auto i = 0; i < SIZE_N; ++i) {
         data[i].ul = 100.0;
@@ -271,7 +272,7 @@ UBENCH_EX(iv, avx_bsv512_omp) {
 
 UBENCH_EX(iv, avx_bs) {
     std::srand(1);
-    alignas(4096) auto data        = new bs[SIZE_N];
+    alignas(4096) bs* __restrict__ data        = new bs[SIZE_N];
 
     for(auto i = 0; i < SIZE_N; ++i) {
         data[i].ul = 100.0;
@@ -305,7 +306,7 @@ UBENCH_EX(iv, avx_bs) {
 
 UBENCH_EX(iv, avx_bs_omp) {
     std::srand(1);
-    alignas(4096) auto data        = new bs[SIZE_N];
+    alignas(4096) bs* __restrict__ data        = new bs[SIZE_N];
 
     omp_set_num_threads(THRD);
 
@@ -363,7 +364,7 @@ UBENCH_EX(pricer, naive_bsv) {
 
 UBENCH_EX(pricer, naive_bs) {
     std::srand(1);
-    alignas(4096) auto data      = new bs[SIZE_N];
+    alignas(4096) bs* __restrict__ data      = new bs[SIZE_N];
 
     for(auto i = 0; i < SIZE_N; ++i) {
         data[i].ul = 100.0;
@@ -477,7 +478,7 @@ UBENCH_EX(pricer, avx_bsv512_omp) {
 
 UBENCH_EX(pricer, avx_bs) {
     std::srand(1);
-    alignas(4096) auto data        = new bs[SIZE_N];
+    alignas(4096) bs* __restrict__ data        = new bs[SIZE_N];
 
     for(auto i = 0; i < SIZE_N; ++i) {
         data[i].ul = 100.0;
@@ -504,7 +505,7 @@ UBENCH_EX(pricer, avx_bs) {
 
 UBENCH_EX(pricer, avx_bs_omp) {
     std::srand(1);
-    alignas(4096) auto data        = new bs[SIZE_N];
+    alignas(4096) bs* __restrict__ data        = new bs[SIZE_N];
 
     omp_set_num_threads(THRD);
 
@@ -554,7 +555,7 @@ UBENCH_EX(vol_edge, naive_bsv) {
 
 UBENCH_EX(vol_edge, naive_bs) {
     std::srand(1);
-    alignas(4096) auto data      = new bs[SIZE_N];
+    alignas(4096) bs* __restrict__ data      = new bs[SIZE_N];
 
     for(auto i = 0; i < SIZE_N; ++i) {
         data[i].iv = 0.2 + 0.4* static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
@@ -587,6 +588,45 @@ UBENCH_EX(vol_edge, avx_bsv) {
     }
 }
 
+UBENCH_EX(vol_edge, avx_unrolled_bsv) {
+    std::srand(1);
+    bsv data;
+
+    for(auto i = 0; i < SIZE_N; ++i) {
+        data.iv[i] = 0.2 + 0.4* static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+        data.vol[i] = 0.2 + 0.4* static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+    }
+
+    UBENCH_DO_BENCHMARK() {
+        Vec16f v0, vi0;
+        Vec16f v1, vi1;
+        Vec16f v2, vi2;
+        Vec16f v3, vi3;
+        for(auto i = 0; i < SIZE_N; i += 64) {
+            v0.load(data.vol + i);
+            v1.load(data.vol + i + 16);
+            v2.load(data.vol + i + 32);
+            v3.load(data.vol + i + 48);
+            vi0.load(data.iv + i);
+            vi1.load(data.iv + i + 16);
+            vi2.load(data.iv + i + 32);
+            vi3.load(data.iv + i + 48);
+            v0 -= vi0;
+            v1 -= vi1;
+            v2 -= vi2;
+            v3 -= vi3;  
+            vi0 = abs(v0);
+            vi1 = abs(v1);
+            vi2 = abs(v2);
+            vi3 = abs(v3);
+            vi0.store(data.theo);
+            vi1.store(data.theo + 16);
+            vi2.store(data.theo + 32);
+            vi3.store(data.theo + 48);
+        }
+    }
+}
+
 UBENCH_EX(vol_edge, avx_bsv512) {
     std::srand(1);
     bsv512 data;
@@ -603,9 +643,40 @@ UBENCH_EX(vol_edge, avx_bsv512) {
     }
 }
 
+UBENCH_EX(vol_edge, avx_unrolled_bsv512) {
+    std::srand(1);
+    bsv512 data;
+
+    for(auto i = 0; i < SIZE_N/16; ++i) {
+        data.iv[i] = 0.2 + 0.4* static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+        data.vol[i] = 0.2 + 0.4* static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+    }
+
+    UBENCH_DO_BENCHMARK() {
+        Vec16f v0, vi0;
+        Vec16f v1, vi1;
+        Vec16f v2, vi2;
+        Vec16f v3, vi3;
+        for(auto i = 0; i < SIZE_N/16; i += 4) {
+            v0 = data.vol[i] - data.iv[i];
+            v1 = data.vol[i + 1] - data.iv[i + 1];
+            v2 = data.vol[i + 2] - data.iv[i + 2];
+            v3 = data.vol[i + 3] - data.iv[i + 3];
+            vi0 = abs(v0);
+            vi1 = abs(v1);
+            vi2 = abs(v2);
+            vi3 = abs(v3);
+            data.theo[i] = vi0;
+            data.theo[i+1] = vi1;
+            data.theo[i+2] = vi2;
+            data.theo[i+3] = vi3;
+        }
+    }
+}
+
 UBENCH_EX(vol_edge, avx_bs) {
     std::srand(1);
-    alignas(2048) auto data        = new bs[SIZE_N];
+    alignas(2048) bs* __restrict__ data        = new bs[SIZE_N];
 
     for(auto i = 0; i < SIZE_N; ++i) {
         data[i].vol = 0.2 + 0.4* static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
