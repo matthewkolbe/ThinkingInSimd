@@ -658,10 +658,18 @@ UBENCH_EX(vol_edge, avx_unrolled_bsv512) {
         Vec16f v2, vi2;
         Vec16f v3, vi3;
         for(auto i = 0; i < SIZE_N/16; i += 4) {
-            v0 = data.vol[i] - data.iv[i];
-            v1 = data.vol[i + 1] - data.iv[i + 1];
-            v2 = data.vol[i + 2] - data.iv[i + 2];
-            v3 = data.vol[i + 3] - data.iv[i + 3];
+            v0 = data.vol[i];
+            v1 = data.vol[i+1];
+            v2 = data.vol[i+2];
+            v3 = data.vol[i+3];
+            vi0 = data.iv[i];
+            vi1 = data.iv[i+1];
+            vi2 = data.iv[i+2];
+            vi3 = data.iv[i+3];
+            v0 -= vi0; 
+            v1 -= vi1;
+            v2 -= vi2;
+            v3 -= vi3;
             vi0 = abs(v0);
             vi1 = abs(v1);
             vi2 = abs(v2);
