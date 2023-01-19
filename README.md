@@ -97,7 +97,7 @@ I would like to see how all data structures perform in all compute paradigms. Ad
 Compiled with `g++ main.cpp -std=c++20 -O3 -lm -lstdc++ -march=native -fopenmp`.
 
 
-| Syntax      | Long (IV)   | Medium (Price) | Short (Abs sum) | Short Unrolled (Abs Sum) |
+| Syntax      | Long (IV)   | Medium (Price) | Short (Abs sum) | Short Unrolled |
 | :---------- | ----------- | ----------- | ----------- | --------- |
 | Naive `bsv`  | 23.083ms +- 0.22% | 1.069ms +- 0.71% |  3.792us +- 0.53% | N/A |
 | Naive `bs` | 23.312ms +- 0.18% | 1.074ms +- 0.3% | 20.855us +- 0.44% | N/A |
