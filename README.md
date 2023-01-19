@@ -30,7 +30,7 @@ There are several types of operations we want to be able to perfrom on our data:
 
 ## The type of AVX acceleration we're targeting
 
-Each calculation I mentioned can be done serially. One interesting thing about all of them is that they can be written as AVX functions. That is, instead of calculating one implied volatility at a time, we can use the VCL to compose a function that calculates 16 at once. So, the goal will be to calculate the desired values in chunks of 16, rather than one at a time. [`vec_black_scholes.hpp`](https://github.com/ThinkingInSimd/vec_black_scholes.hpp) features the implementations of these functions, whereas [`black_scholes.hpp`](https://github.com/ThinkingInSimd/black_scholes.hpp) has the non-vectorized implementations.
+Each calculation I mentioned can be done serially. One interesting thing about all of them is that they can be written as AVX functions. That is, instead of calculating one implied volatility at a time, we can use the VCL to compose a function that calculates 16 at once. So, the goal will be to calculate the desired values in chunks of 16, rather than one at a time. [`vec_black_scholes.hpp`](vec_black_scholes.hpp) features the implementations of these functions, whereas [`black_scholes.hpp`](black_scholes.hpp) has the non-vectorized implementations.
 
 ## The data structures
 
@@ -89,7 +89,7 @@ Although I will not be showing this here, `bsv512` has the additional complicati
 
 ## The test
 
-I would like to see how all data structures perform in all compute paradigms. Additionally, I would like to see how it performs single threaded versus using 32 threads via OpenMP (OMP). I chose a value of `N=51200` because it's approprately large for practical uses, and it divides all my partitions evenly. I use [ubench](https://github.com/sheredom/ubench.h) as the micorbenchmarking framework. It's a header-only library that I embedded in this repo, so it should work seamlessly if you'd like to clone this and run the benchmarks yourself. Here are my systems specs:
+I would like to see how all data structures perform in all compute paradigms. Additionally, I would like to see how it performs single threaded versus using 32 threads via OpenMP (OMP). I chose a value of `N=51200` because it's approprately large for practical uses, and it divides all my partitions evenly. I use [ubench](https://github.com/sheredom/ubench.h) as the microbenchmarking framework. It's a header-only library that I embedded in this repo, so it should work seamlessly if you'd like to clone this and run the benchmarks yourself. Here are my systems specs:
 
 <p style="text-align:center;">
 <img src="images/specs.png" width="500">
