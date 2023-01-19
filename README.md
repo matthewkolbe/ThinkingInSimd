@@ -103,12 +103,12 @@ I would like to see how all data structures perform in all compute paradigms. Ad
 | AVX `bs` | 1.854ms +- 0.32% | 150.135us +- 0.45% | 38.283us +- 0.19%|
 | AVX `bsv512` | 1.538ms +- 0.29% | 84.751us +- 0.14% | 4.165us +- 0.92% |
 | OMP `bsv` | 89.559us +- 2.39% | 7.788us +- 1.34% | N/A |
-| OMP `bs` | 91.233us +- 0.33% | 14.180us +- 2.46% | N/A |
+| OMP `bs` | 91.233us +- 0.33% | 13.640us +- 2.22% | N/A |
 | OMP `bsv512` | 76.961us +- 1.75% | 7.528us +- 1.25% | N/A |
 
 ## Analysis
 
-Results are encouraging. `bs512` is slightly more performant than `bsv` for a long task, but similar or worse for short/medium ones. Depending on your preferences, it seems likely that `bsv`, the much easier and more maintainable structure is also the best from a performance point of view. Also interesting to note that the Naive `bsv` is the fastest for the Short calculation. This is because the compilers knows how to optimize absolute value sums of two float vectors much better than two `Vect16f` vectors. 
+Results are encouraging. `bs512` is slightly more performant than `bsv` for a long task, but similar or worse for short/medium ones. Depending on your preferences, it seems likely that `bsv`, the much easier and more maintainable structure is also the best from a performance point of view. Also interesting to note that the Naive `bsv` is the fastest for the Short calculation. This is because the compilers knows how to optimize absolute value sums of two float vectors much better than two `Vect16f` vectors.[4] 
 
 One other thing of note is how across-the-board bad `bs` is. `scatter` and `gather` combined with cache thrashing is just too much overhead. Even when you use `bs` naively, the results are bad, because the compiler cannot autovectorize it easily.
 
@@ -120,3 +120,5 @@ One other thing of note is how across-the-board bad `bs` is. `scatter` and `gath
 [2] This will be calculating the inverse of the Black-Scholes option price with respect to its volatility parameter, and [you can read about Black-Scholes here](http://www.iam.fmph.uniba.sk/institute/stehlikova/fd14en/lectures/06_black_scholes_2.pdf). Aside from the formula itself being non-trival, with calls to the ERF function, it's not analytically invertible, and it's best to use a bisection root finder to solve instead. 
 
 [3] This will be calculating an option's value in the Black-Scholes formula.
+
+[4] It's worth noting that I was able to match the compiler speed for `bsv` (but not `bsv512`) by unrolling and reordering the operations to faciliate a cleaner pipeline. These are in the `UBENCH_EX(vol_edge, avx_unrolled_bsv)` and `UBENCH_EX(vol_edge, avx_unrolled_bsv512)` benchmarks. It's actually somewhat puzzling to me why `bsv512` isn't matching it.
