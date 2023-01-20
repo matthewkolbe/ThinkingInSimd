@@ -104,9 +104,9 @@ Compiled with `g++ main.cpp -std=c++20 -O3 -lm -lstdc++ -march=native -fopenmp`.
 | AVX `bsv` | 1.727ms<br>+- 0.32%| 85.285us<br>+- 0.12% | 3.748us<br>+- 0.63% | 2.384us<br>+- 0.04% |
 | AVX `bs` | 1.854ms<br>+- 0.32% | 150.135us<br>+- 0.45% | 38.283us<br>+- 0.19%| N/A |
 | AVX `bsv512` | 1.538ms<br>+- 0.29% | 84.751us<br>+- 0.14% | 4.165us<br>+- 0.92% | 3.795us<br>+- 0.59% |
-| OMP `bsv` | 89.559us<br>+- 2.39% | 7.788us<br>+- 1.34% | N/A | N/A |
+| OMP `bsv` | 89.559us<br>+- 2.39% | 7.871us<br>+- 1.31% | N/A | N/A |
 | OMP `bs` | 91.233us<br>+- 0.33% | 13.640us<br>+- 2.22% | N/A | N/A |
-| OMP `bsv512` | 76.961us<br>+- 1.75% | 7.528us<br>+- 1.25% | N/A | N/A |
+| OMP `bsv512` | 76.961us<br>+- 1.75% | 7.861us<br>+- 1.2% | N/A | N/A |
 
 ## Analysis
 
@@ -114,6 +114,9 @@ Results are encouraging. `bs512` is slightly more performant than `bsv` for a lo
 
 One other thing of note is how across-the-board bad `bs` is. `scatter` and `gather` combined with cache thrashing is just too much overhead. Even when you use `bs` naively, the results are bad, because the compiler cannot autovectorize it easily.
 
+## Comments
+
+I think the first point I want to make it just look at how much AVXifying your code can help. Single threaded Naive->AVX offers a >10x speedup. That's hard to ignore, and if the concept is hard to ignore, then you need to consider from the very beginning whether your data structures will hamper your ability to leverage it. It's easy to mistakenly think ahead of time that `bs` would be a good data structure for this purpose. It's simple, and what's more is that by putting all your instrument's data together, you'll get to leverage the idea that using one piece of data implies a high probability that you will use another, so they'll both be there on the cache line already. That sounds logical to me, but then, when you're SIMD optimizing down the road, or the compiler is trying to SIMD optimize for you, you lose big time, and probably by that point, you've built so many other applications around the `bs` data structure that you cannot go back without incurring a huge expense. 
 
 ### Footnotes
 
