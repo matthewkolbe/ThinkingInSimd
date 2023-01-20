@@ -10,6 +10,7 @@
 #include <omp.h>
 
 // compile with: g++ main.cpp -std=c++20 -O3 -lm -lstdc++ -march=native -fopenmp
+// format with: clang-format main.cpp -i -style=Microsoft
 
 #define SIZE_N (1600 * 32)
 
@@ -185,9 +186,14 @@ UBENCH_EX(iv, avx_bsv)
     {
         Vec16f u, t, s, r, p;
         for (auto i = 0; i < SIZE_N; i += 16)
-            bisectIVVec(true, u.load(data.ul + i), t.load(data.tte + i), s.load(data.strike + i), r.load(data.rate + i),
-                        p.load(data.px + i))
-                .store(data.iv + i);
+        {
+            u.load(data.ul + i);
+            t.load(data.tte + i);
+            s.load(data.strike + i);
+            r.load(data.rate + i);
+            p.load(data.px + i);
+            bisectIVVec(true, u, t, s, r, p).store(data.iv + i);
+        }
     }
 
     for (auto i = 0; i < SIZE_N; ++i)
