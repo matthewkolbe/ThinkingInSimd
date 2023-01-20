@@ -170,14 +170,12 @@ UBENCH_EX(iv, avx_bsv) {
 
     UBENCH_DO_BENCHMARK() {
         Vec16f u, t, s, r, p;
-        for(auto i = 0; i < SIZE_N; i+=16) { 
+        for(auto i = 0; i < SIZE_N; i+=16) 
             bisectIVVec(true, u.load(data.ul + i), t.load(data.tte + i), s.load(data.strike + i), r.load(data.rate + i), p.load(data.px + i)).store(data.iv + i);
-        }
     }
 
-    for(auto i = 0; i < SIZE_N; ++i) {
+    for(auto i = 0; i < SIZE_N; ++i) 
         assert(std::abs(data.iv[i] - data.vol[i]) <= 1e-4);
-    }
 }
 
 UBENCH_EX(iv, avx_bsv_omp) {
@@ -201,15 +199,13 @@ UBENCH_EX(iv, avx_bsv_omp) {
         {
             size_t ii = omp_get_thread_num();
             Vec16f u, t, s, r, p;
-            for(auto i = N*ii; i < (ii+1)*N; i+=16) {
-                bisectIVVec(true, u.load(data.ul + i), t.load(data.tte + i), s.load(data.strike + i), r.load(data.rate + i), p.load(data.px + i)).store(data.iv + i);
-            }   
+            for(auto i = N*ii; i < (ii+1)*N; i+=16)
+                bisectIVVec(true, u.load(data.ul + i), t.load(data.tte + i), s.load(data.strike + i), r.load(data.rate + i), p.load(data.px + i)).store(data.iv + i);  
         }
     }
 
-    for(auto i = 0; i < SIZE_N; ++i) {
+    for(auto i = 0; i < SIZE_N; ++i) 
         assert(std::abs(data.iv[i] - data.vol[i]) <= 1e-4);
-    }
 }
 
 UBENCH_EX(iv, avx_bsv512) {
@@ -226,16 +222,15 @@ UBENCH_EX(iv, avx_bsv512) {
     }
 
     UBENCH_DO_BENCHMARK() {
-        for(auto i = 0; i < SIZE_N/16; i++) {
+
+        for(auto i = 0; i < SIZE_N/16; i++) 
             data.iv[i] = bisectIVVec(true, data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.px[i]);
-        }
     }
 
-    for(auto i = 0; i < SIZE_N/16; ++i) {
-        for(auto j = 0; j < 16; ++j) {
+    for(auto i = 0; i < SIZE_N/16; ++i)
+        for(auto j = 0; j < 16; ++j)
             assert(std::abs(data.iv[i].extract(j) - data.vol[i].extract(j)) <= 1e-4);
-        }
-    }
+
 }
 
 UBENCH_EX(iv, avx_bsv512_omp) {
@@ -258,17 +253,14 @@ UBENCH_EX(iv, avx_bsv512_omp) {
         #pragma omp parallel 
         {
             size_t ii = omp_get_thread_num();
-            for(auto i = ii*N; i < (ii+1)*N; i++) {
+            for(auto i = ii*N; i < (ii+1)*N; i++)
                 data.iv[i] = bisectIVVec(true, data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.px[i]);
-            }
         }
     }
 
-    for(auto i = 0; i < SIZE_N/16; ++i) {
-        for(auto j = 0; j < 16; ++j) {
+    for(auto i = 0; i < SIZE_N/16; ++i)
+        for(auto j = 0; j < 16; ++j)
             assert(std::abs(data.iv[i].extract(j) - data.vol[i].extract(j)) <= 1e-4);
-        }
-    }
 }
 
 UBENCH_EX(iv, avx_bs) {
@@ -297,10 +289,8 @@ UBENCH_EX(iv, avx_bs) {
         }
     }
 
-
-    for(auto i = 0; i < SIZE_N; ++i) {
+    for(auto i = 0; i < SIZE_N; ++i) 
         assert(std::abs(data[i].iv - data[i].vol) <= 1e-4);
-    }
 
     delete[] data;
 }
@@ -337,9 +327,8 @@ UBENCH_EX(iv, avx_bs_omp) {
         }
     }
 
-    for(auto i = 0; i < SIZE_N; ++i) {
+    for(auto i = 0; i < SIZE_N; ++i) 
         assert(std::abs(data[i].iv - data[i].vol) <= 1e-4);
-    }
 
     delete[] data;
 }
@@ -357,9 +346,10 @@ UBENCH_EX(pricer, naive_bsv) {
     }
 
     UBENCH_DO_BENCHMARK() {
-        for(auto i = 0; i < SIZE_N; ++i) {
+
+        for(auto i = 0; i < SIZE_N; ++i) 
             data.px[i] = bsPrice(true, data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.vol[i]);
-        }
+        
     }
 }
 
@@ -376,9 +366,9 @@ UBENCH_EX(pricer, naive_bs) {
     }
 
     UBENCH_DO_BENCHMARK() {
-        for(auto i = 0; i < SIZE_N; ++i) {
+        
+        for(auto i = 0; i < SIZE_N; ++i)
             data[i].px = bsPrice(true, data[i].ul, data[i].tte, data[i].strike, data[i].rate, data[i].vol);
-        }
     }
 
     delete[] data;
@@ -399,7 +389,10 @@ UBENCH_EX(pricer, avx_bsv) {
     UBENCH_DO_BENCHMARK() {
         Vec16f u, t, s, r, v;
         for(auto i = 0; i < SIZE_N; i += 16) {
-            bsPriceVec(true, u.load(data.ul + i), t.load(data.tte + i), u.load(data.strike + i), r.load(data.rate + i), v.load(data.vol + i)).store(data.px + i);
+            v.load(data.vol + i);
+            t.load(data.tte + i);
+
+            bsPriceVec(true, u.load(data.ul + i), t, u.load(data.strike + i), r.load(data.rate + i), v).store(data.px + i);
         }
     }
 }
@@ -424,9 +417,8 @@ UBENCH_EX(pricer, avx_bsv_omp) {
         {
             size_t ii = omp_get_thread_num();
             Vec16f u, t, s, r, v;
-            for(auto i = N*ii; i < (ii+1)*N; i+=16) {
-                bsPriceVec(true, u.load(data.ul + i), t.load(data.tte + i), s.load(data.strike + i), r.load(data.rate + i), v.load(data.vol + i)).store(data.px + i);
-            }   
+            for(auto i = N*ii; i < (ii+1)*N; i+=16)
+                bsPriceVec(true, u.load(data.ul + i), t.load(data.tte + i), s.load(data.strike + i), r.load(data.rate + i), v.load(data.vol + i)).store(data.px + i); 
         }
     }
 }
@@ -445,9 +437,9 @@ UBENCH_EX(pricer, avx_bsv512) {
     }
 
     UBENCH_DO_BENCHMARK() {
-        for(auto i = 0; i < SIZE_N/16; i++) {
+
+        for(auto i = 0; i < SIZE_N/16; i++) 
             data.px[i] = bsPriceVec(true, data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.vol[i]);
-        }
     }
 }
 
@@ -470,9 +462,9 @@ UBENCH_EX(pricer, avx_bsv512_omp) {
         #pragma omp parallel 
         {
             size_t ii = omp_get_thread_num();
-            for(auto i = ii*N; i < (ii+1)*N; i++) {
+            for(auto i = ii*N; i < (ii+1)*N; i++) 
                 data.px[i] = bsPriceVec(true, data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.vol[i]);
-            }
+
         }
     }
 }
@@ -548,9 +540,10 @@ UBENCH_EX(vol_edge, naive_bsv) {
     }
 
     UBENCH_DO_BENCHMARK() {
-        for(auto i = 0; i < SIZE_N; ++i) {
+
+        for(auto i = 0; i < SIZE_N; ++i) 
             data.theo[i] = std::abs(data.iv[i] - data.vol[i]);
-        }
+
     }
 }
 
@@ -564,9 +557,9 @@ UBENCH_EX(vol_edge, naive_bs) {
     }
 
     UBENCH_DO_BENCHMARK() {
-        for(auto i = 0; i < SIZE_N; ++i) {
+
+        for(auto i = 0; i < SIZE_N; ++i) 
             data[i].theo = std::abs(data[i].iv - data[i].vol);
-        }
     }
 
     delete[] data;
@@ -583,9 +576,8 @@ UBENCH_EX(vol_edge, avx_bsv) {
 
     UBENCH_DO_BENCHMARK() {
         Vec16f v, vi;
-        for(auto i = 0; i < SIZE_N; i += 16) {
+        for(auto i = 0; i < SIZE_N; i += 16) 
             abs(v.load(data.vol + i) - vi.load(data.iv + i)).store(data.theo + i); 
-        }
     }
 }
 
@@ -638,9 +630,9 @@ UBENCH_EX(vol_edge, avx_bsv512) {
     }
 
     UBENCH_DO_BENCHMARK() {
-        for(auto i = 0; i < SIZE_N/16; ++i) {
+
+        for(auto i = 0; i < SIZE_N/16; ++i)
             data.theo[i] = abs(data.vol[i] - data.iv[i]);
-        }
     }
 }
 
