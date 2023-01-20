@@ -102,7 +102,7 @@ Compiled with `g++ main.cpp -std=c++20 -O3 -lm -lstdc++ -march=native -fopenmp`.
 | Naive `bsv`  | 23.083ms<br>+- 0.22% | 1.069ms<br>+- 0.71% |  3.792us<br>+- 0.53% | N/A |
 | Naive `bs` | 23.312ms<br>+- 0.18% | 1.074ms<br>+- 0.3% | 20.855us<br>+- 0.44% | N/A |
 | AVX `bsv` | 1.727ms<br>+- 0.32%| 85.285us<br>+- 0.12% | 3.748us<br>+- 0.63% | 2.384us<br>+- 0.04% |
-| AVX `bs` | 1.854ms<br>+- 0.32% | 150.135us<br>+- 0.45% | 38.283us<br>+- 0.19%| N/A |
+| AVX `bs` | 1.854ms<br>+- 0.32% | 150.135us<br>+- 0.45% | 43.022us<br>+- 0.45% | 39.877us<br>+- 0.74% |
 | AVX `bsv512` | 1.538ms<br>+- 0.29% | 84.751us<br>+- 0.14% | 4.165us<br>+- 0.92% | 3.795us<br>+- 0.59% |
 | OMP `bsv` | 89.559us<br>+- 2.39% | 7.871us<br>+- 1.31% | N/A | N/A |
 | OMP `bs` | 91.233us<br>+- 0.33% | 13.640us<br>+- 2.22% | N/A | N/A |
