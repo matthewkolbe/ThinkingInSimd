@@ -46,9 +46,7 @@ inline Vec16f bsPriceVec(
     
     auto d1 = (log(ul/strike)+(rate+vol*vol*0.5)*tte)/vol_sqrt_t;
     auto d2 = d1 - vol_sqrt_t;
-    return iscall ? 
-                (cdfnorm(d1) * ul) - (cdfnorm(d2)*strike * exp(-rate*tte)) :
-                cdfnorm(-d2)*strike*exp(-rate*tte) -cdfnorm(-d1)*ul;
+    return (cdfnorm(d1) * ul) - (cdfnorm(d2)*strike * exp(-rate*tte));
 }
 
 inline Vec16f bisectIVVec(const bool iscall, const Vec16f ul, const Vec16f tte, const Vec16f strike, const Vec16f rate, const Vec16f price)

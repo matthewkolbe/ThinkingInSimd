@@ -13,9 +13,7 @@ float bsPrice(
     auto vol_sqrt_t = vol*std::sqrt(tte);
     auto d1 = (std::log(ul/strike)+(rate+vol*vol*0.5)*tte)/vol_sqrt_t;
     auto d2 = d1 - vol_sqrt_t;
-    return iscall ? 
-                nCDF(d1) * ul - nCDF(d2)*strike*std::exp(-rate*tte) :
-                nCDF(-d2)*strike*std::exp(-rate*tte) -nCDF(-d1)*ul;
+    return nCDF(d1) * ul - nCDF(d2)*strike*std::exp(-rate*tte);
 }
 
 float bisectIV(const bool & iscall, const float & ul, const float & tte, const float & strike, const float & rate, const float & price)
