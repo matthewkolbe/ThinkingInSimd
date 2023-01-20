@@ -760,11 +760,48 @@ UBENCH_EX(vol_edge, avx_bs)
 
     UBENCH_DO_BENCHMARK()
     {
-        for (auto i = 0; i < SIZE_N / 16; i++)
+        for (auto i = 0; i < SIZE_N; i += 16)
         {
             auto vol = gather16f<BS_VOL>(data + i);
             auto iv = gather16f<BS_IV>(data + i);
             scatter<BS_THEO>(abs(iv - vol), (float *)(data + i));
+        }
+    }
+
+    delete[] data;
+}
+
+UBENCH_EX(vol_edge, avx_unrolled_bs)
+{
+    std::srand(1);
+    alignas(2048) bs *__restrict__ data = new bs[SIZE_N];
+
+    for (auto i = 0; i < SIZE_N; ++i)
+    {
+        data[i].vol = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+        data[i].iv = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+    }
+
+    UBENCH_DO_BENCHMARK()
+    {
+        Vec16f v0, vi0;
+        Vec16f v1, vi1;
+        Vec16f v2, vi2;
+        Vec16f v3, vi3;
+        for (auto i = 0; i < SIZE_N; i += 64)
+        {
+            v0 = gather16f<BS_VOL>(data + i);
+            vi0 = gather16f<BS_IV>(data + i);
+            v1 = gather16f<BS_VOL>(data + i + 16);
+            vi1 = gather16f<BS_IV>(data + i + 16);
+            v2 = gather16f<BS_VOL>(data + i + 32);
+            vi2 = gather16f<BS_IV>(data + i + 32);
+            v3 = gather16f<BS_VOL>(data + i + 48);
+            vi3 = gather16f<BS_IV>(data + i + 48);
+            scatter<BS_THEO>(abs(vi0 - v0), (float *)(data + i));
+            scatter<BS_THEO>(abs(vi1 - v1), (float *)(data + i + 16));
+            scatter<BS_THEO>(abs(vi2 - v2), (float *)(data + i + 32));
+            scatter<BS_THEO>(abs(vi3 - v3), (float *)(data + i + 48));
         }
     }
 
