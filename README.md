@@ -20,7 +20,7 @@ That last sentence I think highlights the biggest problem: no one wants to use i
 
 I would like to help maybe turn what looks like a problem into a solution.
 
-# A case study on how to organize an AVX accelerated application.
+# A C/C++ case study on how to organize an AVX accelerated application.
 
 In a recent CppCon talk, Optiver's David Gross said "if you don't design your data properly, it's just going to be slow everywhere," highlighting the idea that you cannot micro-optimize out bottleneck problems if they're built on memory-inefficient data structures. So, the fundamental question I want to answer is how we build a data processing solution that effectively integrates AVX intrinsics, and as an example, I'll draw from my field of work: financial derivatives pricing.
 
