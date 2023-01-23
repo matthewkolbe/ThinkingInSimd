@@ -1,3 +1,5 @@
+// Copyright 2023 Matthew Kolbe
+
 #include "black_scholes.hpp"
 #include "ubench.h"
 #include "vcl/vectorclass.h"
@@ -665,6 +667,7 @@ UBENCH_EX(vol_edge, avx_unrolled_bsv)
     {
         data.iv[i] = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
         data.vol[i] = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+        data.theo[i] = 0.0;
     }
 
     UBENCH_DO_BENCHMARK()
@@ -727,6 +730,7 @@ UBENCH_EX(vol_edge, avx_unrolled_bsv512)
     {
         data.iv[i] = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
         data.vol[i] = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+        data.theo[i] = 0.0;
     }
 
     UBENCH_DO_BENCHMARK()
@@ -735,7 +739,7 @@ UBENCH_EX(vol_edge, avx_unrolled_bsv512)
         Vec16f v1;
         Vec16f v2;
         Vec16f v3;
-        for (auto i = 0; i < SIZE_N / 16; i += 4)
+        for (auto i = 0; i < SIZE_N / 16; i += 8)
         {
             v0 = data.vol[i];
             v1 = data.vol[i + 1];

@@ -1,4 +1,4 @@
-
+// Copyright 2023 Matthew Kolbe
 
 #include <immintrin.h>
 #include <math.h>
