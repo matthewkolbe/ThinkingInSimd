@@ -38,26 +38,26 @@ struct alignas(4096) bsv
   public:
     bsv()
     {
-        ul =        new float[SIZE_N];
-        tte =       new float[SIZE_N];
-        strike =    new float[SIZE_N];
-        rate =      new float[SIZE_N];
-        vol =       new float[SIZE_N];
-        iv =        new float[SIZE_N];
-        px =        new float[SIZE_N];
-        theo =      new float[SIZE_N];
+        ul = new float[SIZE_N];
+        tte = new float[SIZE_N];
+        strike = new float[SIZE_N];
+        rate = new float[SIZE_N];
+        vol = new float[SIZE_N];
+        iv = new float[SIZE_N];
+        px = new float[SIZE_N];
+        theo = new float[SIZE_N];
     }
 
     ~bsv()
     {
-        delete[] ul    ;
-        delete[] tte   ;
+        delete[] ul;
+        delete[] tte;
         delete[] strike;
-        delete[] rate  ;
-        delete[] vol   ;
-        delete[] iv    ;
-        delete[] px    ;
-        delete[] theo  ;
+        delete[] rate;
+        delete[] vol;
+        delete[] iv;
+        delete[] px;
+        delete[] theo;
     }
 
     float *__restrict__ ul;
@@ -70,33 +70,31 @@ struct alignas(4096) bsv
     float *__restrict__ theo;
 };
 
-
-
 struct alignas(4096) bsv512
 {
   public:
     bsv512()
     {
-        ul =        new Vec16f[SIZE_N / 16];
-        tte =       new Vec16f[SIZE_N / 16];
-        strike =    new Vec16f[SIZE_N / 16];
-        rate =      new Vec16f[SIZE_N / 16];
-        vol =       new Vec16f[SIZE_N / 16];
-        iv =        new Vec16f[SIZE_N / 16];
-        px =        new Vec16f[SIZE_N / 16];
-        theo =      new Vec16f[SIZE_N / 16];
+        ul = new Vec16f[SIZE_N / 16];
+        tte = new Vec16f[SIZE_N / 16];
+        strike = new Vec16f[SIZE_N / 16];
+        rate = new Vec16f[SIZE_N / 16];
+        vol = new Vec16f[SIZE_N / 16];
+        iv = new Vec16f[SIZE_N / 16];
+        px = new Vec16f[SIZE_N / 16];
+        theo = new Vec16f[SIZE_N / 16];
     }
 
     ~bsv512()
     {
-        delete[] ul     ;
-        delete[] tte    ;
-        delete[] strike ;
-        delete[] rate   ;
-        delete[] vol    ;
-        delete[] iv     ;
-        delete[] px     ;
-        delete[] theo   ;
+        delete[] ul;
+        delete[] tte;
+        delete[] strike;
+        delete[] rate;
+        delete[] vol;
+        delete[] iv;
+        delete[] px;
+        delete[] theo;
     }
 
     Vec16f *__restrict__ ul;
@@ -231,10 +229,10 @@ UBENCH_EX(iv, avx_bsv_omp)
         {
             size_t ii = omp_get_thread_num();
             Vec16f u, t, s, r, p;
-            for (auto i = N * ii; i < (ii + 1) * N; i += 16) {
+            for (auto i = N * ii; i < (ii + 1) * N; i += 16)
+            {
                 t.load(data.tte + i);
-                bisectIVVec(u.load(data.ul + i), t, s.load(data.strike + i),
-                            r.load(data.rate + i), p.load(data.px + i))
+                bisectIVVec(u.load(data.ul + i), t, s.load(data.strike + i), r.load(data.rate + i), p.load(data.px + i))
                     .store(data.iv + i);
             }
         }
@@ -451,8 +449,7 @@ UBENCH_EX(pricer, avx_bsv)
             v.load(data.vol + i);
             t.load(data.tte + i);
 
-            bsPriceVec(u.load(data.ul + i), t, u.load(data.strike + i), r.load(data.rate + i), v)
-                .store(data.px + i);
+            bsPriceVec(u.load(data.ul + i), t, u.load(data.strike + i), r.load(data.rate + i), v).store(data.px + i);
         }
     }
 }
@@ -481,8 +478,8 @@ UBENCH_EX(pricer, avx_bsv_omp)
             size_t ii = omp_get_thread_num();
             Vec16f u, t, s, r, v;
             for (auto i = N * ii; i < (ii + 1) * N; i += 16)
-                bsPriceVec(u.load(data.ul + i), t.load(data.tte + i), s.load(data.strike + i),
-                           r.load(data.rate + i), v.load(data.vol + i))
+                bsPriceVec(u.load(data.ul + i), t.load(data.tte + i), s.load(data.strike + i), r.load(data.rate + i),
+                           v.load(data.vol + i))
                     .store(data.px + i);
         }
     }
