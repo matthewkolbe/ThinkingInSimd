@@ -33,78 +33,80 @@ struct alignas(32) bs
     float ul, tte, strike, rate, iv, vol, px, theo;
 };
 
-struct alignas(64) bsv
+struct alignas(4096) bsv
 {
   public:
     bsv()
     {
-        ul = new float[SIZE_N];
-        tte = new float[SIZE_N];
-        strike = new float[SIZE_N];
-        rate = new float[SIZE_N];
-        vol = new float[SIZE_N];
-        iv = new float[SIZE_N];
-        px = new float[SIZE_N];
-        theo = new float[SIZE_N];
+        ul =        new float[SIZE_N];
+        tte =       new float[SIZE_N];
+        strike =    new float[SIZE_N];
+        rate =      new float[SIZE_N];
+        vol =       new float[SIZE_N];
+        iv =        new float[SIZE_N];
+        px =        new float[SIZE_N];
+        theo =      new float[SIZE_N];
     }
 
     ~bsv()
     {
-        delete[] ul;
-        delete[] tte;
+        delete[] ul    ;
+        delete[] tte   ;
         delete[] strike;
-        delete[] rate;
-        delete[] vol;
-        delete[] iv;
-        delete[] px;
-        delete[] theo;
+        delete[] rate  ;
+        delete[] vol   ;
+        delete[] iv    ;
+        delete[] px    ;
+        delete[] theo  ;
     }
 
-    alignas(4) float *__restrict__ ul;
-    alignas(4) float *__restrict__ tte;
-    alignas(4) float *__restrict__ strike;
-    alignas(4) float *__restrict__ rate;
-    alignas(4) float *__restrict__ iv;
-    alignas(4) float *__restrict__ vol;
-    alignas(4) float *__restrict__ px;
-    alignas(4) float *__restrict__ theo;
+    float *__restrict__ ul;
+    float *__restrict__ tte;
+    float *__restrict__ strike;
+    float *__restrict__ rate;
+    float *__restrict__ iv;
+    float *__restrict__ vol;
+    float *__restrict__ px;
+    float *__restrict__ theo;
 };
 
-struct alignas(64) bsv512
+
+
+struct alignas(4096) bsv512
 {
   public:
     bsv512()
     {
-        ul = new Vec16f[SIZE_N / 16];
-        tte = new Vec16f[SIZE_N / 16];
-        strike = new Vec16f[SIZE_N / 16];
-        rate = new Vec16f[SIZE_N / 16];
-        vol = new Vec16f[SIZE_N / 16];
-        iv = new Vec16f[SIZE_N / 16];
-        px = new Vec16f[SIZE_N / 16];
-        theo = new Vec16f[SIZE_N / 16];
+        ul =        new Vec16f[SIZE_N / 16];
+        tte =       new Vec16f[SIZE_N / 16];
+        strike =    new Vec16f[SIZE_N / 16];
+        rate =      new Vec16f[SIZE_N / 16];
+        vol =       new Vec16f[SIZE_N / 16];
+        iv =        new Vec16f[SIZE_N / 16];
+        px =        new Vec16f[SIZE_N / 16];
+        theo =      new Vec16f[SIZE_N / 16];
     }
 
     ~bsv512()
     {
-        delete[] ul;
-        delete[] tte;
-        delete[] strike;
-        delete[] rate;
-        delete[] vol;
-        delete[] iv;
-        delete[] px;
-        delete[] theo;
+        delete[] ul     ;
+        delete[] tte    ;
+        delete[] strike ;
+        delete[] rate   ;
+        delete[] vol    ;
+        delete[] iv     ;
+        delete[] px     ;
+        delete[] theo   ;
     }
 
-    alignas(64) Vec16f *__restrict__ ul;
-    alignas(64) Vec16f *__restrict__ tte;
-    alignas(64) Vec16f *__restrict__ strike;
-    alignas(64) Vec16f *__restrict__ rate;
-    alignas(64) Vec16f *__restrict__ iv;
-    alignas(64) Vec16f *__restrict__ vol;
-    alignas(64) Vec16f *__restrict__ px;
-    alignas(64) Vec16f *__restrict__ theo;
+    Vec16f *__restrict__ ul;
+    Vec16f *__restrict__ tte;
+    Vec16f *__restrict__ strike;
+    Vec16f *__restrict__ rate;
+    Vec16f *__restrict__ iv;
+    Vec16f *__restrict__ vol;
+    Vec16f *__restrict__ px;
+    Vec16f *__restrict__ theo;
 };
 
 UBENCH_MAIN();
@@ -121,14 +123,14 @@ UBENCH_EX(iv, naive_bsv)
         data.strike[i] = 110.0;
         data.rate[i] = 0.05;
         data.vol[i] = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-        data.px[i] = bsPrice(true, data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.vol[i]);
+        data.px[i] = bsPrice(data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.vol[i]);
     }
 
     UBENCH_DO_BENCHMARK()
     {
         for (auto i = 0; i < SIZE_N; ++i)
         {
-            data.iv[i] = bisectIV(true, data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.px[i]);
+            data.iv[i] = bisectIV(data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.px[i]);
         }
     }
 
@@ -150,14 +152,14 @@ UBENCH_EX(iv, naive_bs)
         data[i].strike = 110.0;
         data[i].rate = 0.05;
         data[i].vol = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-        data[i].px = bsPrice(true, data[i].ul, data[i].tte, data[i].strike, data[i].rate, data[i].vol);
+        data[i].px = bsPrice(data[i].ul, data[i].tte, data[i].strike, data[i].rate, data[i].vol);
     }
 
     UBENCH_DO_BENCHMARK()
     {
         for (auto i = 0; i < SIZE_N; ++i)
         {
-            data[i].iv = bisectIV(true, data[i].ul, data[i].tte, data[i].strike, data[i].rate, data[i].px);
+            data[i].iv = bisectIV(data[i].ul, data[i].tte, data[i].strike, data[i].rate, data[i].px);
         }
     }
 
@@ -181,7 +183,8 @@ UBENCH_EX(iv, avx_bsv)
         data.strike[i] = 110.0;
         data.rate[i] = 0.05;
         data.vol[i] = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-        data.px[i] = bsPrice(true, data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.vol[i]);
+        data.px[i] = bsPrice(data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.vol[i]);
+        data.iv[i] = 0.0;
     }
 
     UBENCH_DO_BENCHMARK()
@@ -194,7 +197,7 @@ UBENCH_EX(iv, avx_bsv)
             s.load(data.strike + i);
             r.load(data.rate + i);
             p.load(data.px + i);
-            bisectIVVec(true, u, t, s, r, p).store(data.iv + i);
+            bisectIVVec(u, t, s, r, p).store(data.iv + i);
         }
     }
 
@@ -216,9 +219,11 @@ UBENCH_EX(iv, avx_bsv_omp)
         data.strike[i] = 110.0;
         data.rate[i] = 0.05;
         data.vol[i] = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-        data.px[i] = bsPrice(true, data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.vol[i]);
+        data.px[i] = bsPrice(data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.vol[i]);
+        data.iv[i] = 0.0;
     }
-    size_t N = SIZE_N / (THRD);
+
+    const size_t N = SIZE_N / (THRD);
 
     UBENCH_DO_BENCHMARK()
     {
@@ -226,10 +231,12 @@ UBENCH_EX(iv, avx_bsv_omp)
         {
             size_t ii = omp_get_thread_num();
             Vec16f u, t, s, r, p;
-            for (auto i = N * ii; i < (ii + 1) * N; i += 16)
-                bisectIVVec(true, u.load(data.ul + i), t.load(data.tte + i), s.load(data.strike + i),
+            for (auto i = N * ii; i < (ii + 1) * N; i += 16) {
+                t.load(data.tte + i);
+                bisectIVVec(u.load(data.ul + i), t, s.load(data.strike + i),
                             r.load(data.rate + i), p.load(data.px + i))
                     .store(data.iv + i);
+            }
         }
     }
 
@@ -249,14 +256,14 @@ UBENCH_EX(iv, avx_bsv512)
         data.strike[i] = 110.0;
         data.rate[i] = 0.05;
         data.vol[i] = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-        data.px[i] = bsPriceVec(true, data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.vol[i]);
+        data.px[i] = bsPriceVec(data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.vol[i]);
+        data.iv[i] = 0.0;
     }
 
     UBENCH_DO_BENCHMARK()
     {
-
         for (auto i = 0; i < SIZE_N / 16; i++)
-            data.iv[i] = bisectIVVec(true, data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.px[i]);
+            data.iv[i] = bisectIVVec(data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.px[i]);
     }
 
     for (auto i = 0; i < SIZE_N / 16; ++i)
@@ -278,9 +285,10 @@ UBENCH_EX(iv, avx_bsv512_omp)
         data.strike[i] = 110.0;
         data.rate[i] = 0.05;
         data.vol[i] = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-        data.px[i] = bsPriceVec(true, data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.vol[i]);
+        data.px[i] = bsPriceVec(data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.vol[i]);
+        data.iv[i] = 0.0;
     }
-    size_t N = SIZE_N / (16 * THRD);
+    const size_t N = SIZE_N / (16 * THRD);
 
     UBENCH_DO_BENCHMARK()
     {
@@ -288,7 +296,7 @@ UBENCH_EX(iv, avx_bsv512_omp)
         {
             size_t ii = omp_get_thread_num();
             for (auto i = ii * N; i < (ii + 1) * N; i++)
-                data.iv[i] = bisectIVVec(true, data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.px[i]);
+                data.iv[i] = bisectIVVec(data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.px[i]);
         }
     }
 
@@ -310,7 +318,7 @@ UBENCH_EX(iv, avx_bs)
         data[i].rate = 0.05;
         data[i].iv = 0.0;
         data[i].vol = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-        data[i].px = bsPrice(true, data[i].ul, data[i].tte, data[i].strike, data[i].rate, data[i].vol);
+        data[i].px = bsPrice(data[i].ul, data[i].tte, data[i].strike, data[i].rate, data[i].vol);
         data[i].theo = 0.0;
     }
 
@@ -323,7 +331,7 @@ UBENCH_EX(iv, avx_bs)
             auto str = gather16f<BS_STRIKE>(data + i);
             auto rate = gather16f<BS_RATE>(data + i);
             auto px = gather16f<BS_PX>(data + i);
-            scatter<BS_IV>(bisectIVVec(true, ul, tte, str, rate, px), (float *)(data + i));
+            scatter<BS_IV>(bisectIVVec(ul, tte, str, rate, px), (float *)(data + i));
         }
     }
 
@@ -347,10 +355,10 @@ UBENCH_EX(iv, avx_bs_omp)
         data[i].strike = 110.0;
         data[i].rate = 0.05;
         data[i].vol = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-        data[i].px = bsPrice(true, data[i].ul, data[i].tte, data[i].strike, data[i].rate, data[i].vol);
+        data[i].px = bsPrice(data[i].ul, data[i].tte, data[i].strike, data[i].rate, data[i].vol);
     }
 
-    size_t N = SIZE_N / THRD;
+    const size_t N = SIZE_N / THRD;
 
     UBENCH_DO_BENCHMARK()
     {
@@ -364,7 +372,7 @@ UBENCH_EX(iv, avx_bs_omp)
                 auto str = gather16f<BS_STRIKE>(data + i);
                 auto rate = gather16f<BS_RATE>(data + i);
                 auto px = gather16f<BS_PX>(data + i);
-                scatter<BS_IV>(bisectIVVec(true, ul, tte, str, rate, px), (float *)(data + i));
+                scatter<BS_IV>(bisectIVVec(ul, tte, str, rate, px), (float *)(data + i));
             }
         }
     }
@@ -393,7 +401,7 @@ UBENCH_EX(pricer, naive_bsv)
     {
 
         for (auto i = 0; i < SIZE_N; ++i)
-            data.px[i] = bsPrice(true, data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.vol[i]);
+            data.px[i] = bsPrice(data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.vol[i]);
     }
 }
 
@@ -415,7 +423,7 @@ UBENCH_EX(pricer, naive_bs)
     {
 
         for (auto i = 0; i < SIZE_N; ++i)
-            data[i].px = bsPrice(true, data[i].ul, data[i].tte, data[i].strike, data[i].rate, data[i].vol);
+            data[i].px = bsPrice(data[i].ul, data[i].tte, data[i].strike, data[i].rate, data[i].vol);
     }
 
     delete[] data;
@@ -443,7 +451,7 @@ UBENCH_EX(pricer, avx_bsv)
             v.load(data.vol + i);
             t.load(data.tte + i);
 
-            bsPriceVec(true, u.load(data.ul + i), t, u.load(data.strike + i), r.load(data.rate + i), v)
+            bsPriceVec(u.load(data.ul + i), t, u.load(data.strike + i), r.load(data.rate + i), v)
                 .store(data.px + i);
         }
     }
@@ -464,7 +472,7 @@ UBENCH_EX(pricer, avx_bsv_omp)
         data.rate[i] = 0.05;
         data.vol[i] = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
     }
-    size_t N = SIZE_N / (THRD);
+    const size_t N = SIZE_N / (THRD);
 
     UBENCH_DO_BENCHMARK()
     {
@@ -473,7 +481,7 @@ UBENCH_EX(pricer, avx_bsv_omp)
             size_t ii = omp_get_thread_num();
             Vec16f u, t, s, r, v;
             for (auto i = N * ii; i < (ii + 1) * N; i += 16)
-                bsPriceVec(true, u.load(data.ul + i), t.load(data.tte + i), s.load(data.strike + i),
+                bsPriceVec(u.load(data.ul + i), t.load(data.tte + i), s.load(data.strike + i),
                            r.load(data.rate + i), v.load(data.vol + i))
                     .store(data.px + i);
         }
@@ -492,14 +500,13 @@ UBENCH_EX(pricer, avx_bsv512)
         data.strike[i] = 110.0;
         data.rate[i] = 0.05;
         data.vol[i] = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-        data.px[i] = bsPriceVec(true, data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.vol[i]);
+        data.px[i] = bsPriceVec(data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.vol[i]);
     }
 
     UBENCH_DO_BENCHMARK()
     {
-
         for (auto i = 0; i < SIZE_N / 16; i++)
-            data.px[i] = bsPriceVec(true, data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.vol[i]);
+            data.px[i] = bsPriceVec(data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.vol[i]);
     }
 }
 
@@ -518,7 +525,7 @@ UBENCH_EX(pricer, avx_bsv512_omp)
         data.rate[i] = 0.05;
         data.vol[i] = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
     }
-    size_t N = SIZE_N / (16 * THRD);
+    const size_t N = SIZE_N / (16 * THRD);
 
     UBENCH_DO_BENCHMARK()
     {
@@ -526,7 +533,7 @@ UBENCH_EX(pricer, avx_bsv512_omp)
         {
             size_t ii = omp_get_thread_num();
             for (auto i = ii * N; i < (ii + 1) * N; i++)
-                data.px[i] = bsPriceVec(true, data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.vol[i]);
+                data.px[i] = bsPriceVec(data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.vol[i]);
         }
     }
 }
@@ -554,7 +561,7 @@ UBENCH_EX(pricer, avx_bs)
             auto str = gather16f<BS_STRIKE>(data + i);
             auto rate = gather16f<BS_RATE>(data + i);
             auto vol = gather16f<BS_VOL>(data + i);
-            scatter<BS_THEO>(bsPriceVec(true, ul, tte, str, rate, vol), (float *)(data + i));
+            scatter<BS_THEO>(bsPriceVec(ul, tte, str, rate, vol), (float *)(data + i));
         }
     }
 
@@ -577,7 +584,7 @@ UBENCH_EX(pricer, avx_bs_omp)
         data[i].vol = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
     }
 
-    size_t N = SIZE_N / THRD;
+    const size_t N = SIZE_N / THRD;
 
     UBENCH_DO_BENCHMARK()
     {
@@ -591,7 +598,7 @@ UBENCH_EX(pricer, avx_bs_omp)
                 auto str = gather16f<BS_STRIKE>(data + i);
                 auto rate = gather16f<BS_RATE>(data + i);
                 auto vol = gather16f<BS_VOL>(data + i);
-                scatter<BS_THEO>(bsPriceVec(true, ul, tte, str, rate, vol), (float *)(data + i));
+                scatter<BS_THEO>(bsPriceVec(ul, tte, str, rate, vol), (float *)(data + i));
             }
         }
     }

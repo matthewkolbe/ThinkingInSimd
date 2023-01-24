@@ -20,7 +20,7 @@ const Vec16f VE5 = Vec16f(1.061405429);
 const Vec16f VNEGHALF = Vec16f(-0.5);
 const Vec16f ONE_OVER_ROOT2 = Vec16f(0.70710678118);
 
-inline Vec16f erf(const Vec16f x)
+inline __attribute__((always_inline)) Vec16f erf(const Vec16f x)
 {
     auto le_mask = (x <= VNEGATIVE_ZERO);
     auto xx = abs(x);
@@ -36,12 +36,12 @@ inline Vec16f erf(const Vec16f x)
     return ((!le_mask) & yy) + (le_mask & (-yy));
 }
 
-inline Vec16f cdfnorm(const Vec16f x)
+inline __attribute__((always_inline)) Vec16f cdfnorm(const Vec16f x)
 {
     return 0.5 * (1.0 + erf(x * ONE_OVER_ROOT2));
 }
 
-inline Vec16f bsPriceVec(const bool iscall, const Vec16f ul, const Vec16f tte, const Vec16f strike, const Vec16f rate,
+inline __attribute__((always_inline)) Vec16f bsPriceVec(const Vec16f ul, const Vec16f tte, const Vec16f strike, const Vec16f rate,
                          const Vec16f vol)
 {
     auto vol_sqrt_t = vol * sqrt(tte);
@@ -51,13 +51,15 @@ inline Vec16f bsPriceVec(const bool iscall, const Vec16f ul, const Vec16f tte, c
     return (cdfnorm(d1) * ul) - (cdfnorm(d2) * strike * exp(-rate * tte));
 }
 
-inline Vec16f bisectIVVec(const bool iscall, const Vec16f ul, const Vec16f tte, const Vec16f strike, const Vec16f rate,
+inline __attribute__((always_inline)) Vec16f bisectIVVec(const Vec16f ul, const Vec16f tte, const Vec16f strike, const Vec16f rate,
                           const Vec16f price)
 {
     auto low_vol = Vec16f(0.01f);
     auto high_vol = Vec16f(2.0f);
-    auto mid_vol = 0.5 * (low_vol + high_vol);
-    auto mid_val = bsPriceVec(iscall, ul, tte, strike, rate, mid_vol);
+    auto mid_vol = Vec16f(0.995f);
+    const Vec16f eps = Vec16f(1e-4);
+
+    auto mid_val = bsPriceVec(ul, tte, strike, rate, mid_vol);
     auto condition = abs(mid_val - price) > 1e-4;
     while ((__mmask16)(static_cast<Vec16b>(condition)) != 0)
     {
@@ -66,8 +68,8 @@ inline Vec16f bisectIVVec(const bool iscall, const Vec16f ul, const Vec16f tte, 
         low_vol = (low_vol & msk) + (mid_vol & (!msk));
 
         mid_vol = 0.5 * (low_vol + high_vol);
-        mid_val = bsPriceVec(iscall, ul, tte, strike, rate, mid_vol);
-        condition = abs(mid_val - price) > Vec16f(1e-4);
+        mid_val = bsPriceVec(ul, tte, strike, rate, mid_vol);
+        condition = abs(mid_val - price) > eps;
     }
 
     return mid_vol;
