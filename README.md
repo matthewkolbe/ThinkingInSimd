@@ -48,32 +48,32 @@ struct alignas(32)  bs {
 The next would be to keep each data type in a contigious array inside a data structure:
 
 ```
-struct alignas(64) bsv {
+struct alignas(4096) bsv {
     public:
-    alignas(4) float* __restrict__  ul;
-    alignas(4) float* __restrict__ tte;
-    alignas(4) float* __restrict__ strike;
-    alignas(4) float* __restrict__ rate;
-    alignas(4) float* __restrict__ iv;
-    alignas(4) float* __restrict__ vol;
-    alignas(4) float* __restrict__ px;
-    alignas(4) float* __restrict__ theo;
+    float* __restrict__  ul;
+    float* __restrict__ tte;
+    float* __restrict__ strike;
+    float* __restrict__ rate;
+    float* __restrict__ iv;
+    float* __restrict__ vol;
+    float* __restrict__ px;
+    float* __restrict__ theo;
 };
 ```
 
 Neither of these leverages any intrinsic data structure. So in the third, we will replace the `float` arrays with arrays of vector types. For this, we will use Agner Fog's superb [Vector Class Library (VCL)](https://github.com/vectorclass/version2), and specifically use the `Vec16f` type, which is a 512-bit storage for 16 contiguous floats.
 
 ```
-struct alignas(64)  bsv512 {
-    public:
-    alignas(64) Vec16f* __restrict__ ul;
-    alignas(64) Vec16f* __restrict__ tte;
-    alignas(64) Vec16f* __restrict__ strike;
-    alignas(64) Vec16f* __restrict__ rate;
-    alignas(64) Vec16f* __restrict__ iv;
-    alignas(64) Vec16f* __restrict__ vol;
-    alignas(64) Vec16f* __restrict__ px;
-    alignas(64) Vec16f* __restrict__ theo;
+struct alignas(4096) bsv512
+{
+    Vec16f *__restrict__ ul;
+    Vec16f *__restrict__ tte;
+    Vec16f *__restrict__ strike;
+    Vec16f *__restrict__ rate;
+    Vec16f *__restrict__ iv;
+    Vec16f *__restrict__ vol;
+    Vec16f *__restrict__ px;
+    Vec16f *__restrict__ theo;
 };
 ```
 
@@ -89,7 +89,7 @@ Although I will not be showing this here, `bsv512` has the additional complicati
 
 ## The test
 
-I would like to see how all data structures perform in all compute paradigms. Additionally, I would like to see how it performs single threaded versus using 32 threads via OpenMP (OMP). I chose a value of `N=51200` because it's appropriately large for practical uses, and it divides all my partitions evenly. I use [ubench](https://github.com/sheredom/ubench.h) as the microbenchmarking framework. It's a header-only library that I embedded in this repo, so it should work seamlessly if you'd like to clone this and run the benchmarks yourself. Here are my systems specs:
+I would like to see how all data structures perform in all compute paradigms. Additionally, I would like to see how it performs single threaded versus using 32 threads via OpenMP (OMP). I chose a value of `N=51200` because it's appropriately large for practical uses, and it divides all my partitions evenly. Of note is that `51200*8*4=1.6MB` for the total data operated on, and my processor has 64K of L1 cache and 1MB of L2 per core. If we want to start exceeding cache, the usefulness of each data structure is bound to change. I use [ubench](https://github.com/sheredom/ubench.h) as the microbenchmarking framework. It's a header-only library that I embedded in this repo, so it should work seamlessly if you'd like to clone this and run the benchmarks yourself. Here are my systems specs:
 
 <p style="text-align:center;">
 <img src="images/specs.png" width="500">
@@ -103,14 +103,14 @@ Compiled with `g++ main.cpp -std=c++20 -O3 -lm -lstdc++ -march=native -fopenmp`.
 | Naive `bs` | 23.312ms<br>+- 0.18% | 1.074ms<br>+- 0.3% | 20.855us<br>+- 0.44% | N/A |
 | AVX `bsv` | 1.727ms<br>+- 0.32%| 85.285us<br>+- 0.12% | 3.748us<br>+- 0.63% | 2.384us<br>+- 0.04% |
 | AVX `bs` | 1.854ms<br>+- 0.32% | 150.135us<br>+- 0.45% | 43.022us<br>+- 0.45% | 39.877us<br>+- 0.74% |
-| AVX `bsv512` | 1.538ms<br>+- 0.29% | 84.751us<br>+- 0.14% | 4.165us<br>+- 0.92% | 3.795us<br>+- 0.59% |
-| OMP `bsv` | 89.559us<br>+- 2.39% | 7.871us<br>+- 1.31% | N/A | N/A |
+| AVX `bsv512` | 1.538ms<br>+- 0.29% | 84.751us<br>+- 0.14% | 4.165us<br>+- 0.92% | 1.885us<br>+- 0.82% |
+| OMP `bsv` | 87.665us<br>+- 0.42% | 7.871us<br>+- 1.31% | N/A | N/A |
 | OMP `bs` | 91.233us<br>+- 0.33% | 13.640us<br>+- 2.22% | N/A | N/A |
 | OMP `bsv512` | 76.961us<br>+- 1.75% | 7.861us<br>+- 1.2% | N/A | N/A |
 
 ## Analysis
 
-Results are encouraging. `bs512` is slightly more performant than `bsv` for a long task, but similar or worse for short/medium ones. Depending on your preferences, it seems likely that `bsv`, the much easier and more maintainable structure is also the best from a performance point of view. Also interesting to note that the Naive `bsv` is the fastest for the Short calculation if you go through the effort to manually unroll the loop and reorder the operations to prevent blocking to wait for a calculation to finish.
+`bsv512` seems to be a clear winner. This is interesting from the perspective of any lesson the glean, because I think it just raises more questions like "what about storing data into it?" I think it's a little unfortunate as well, because `bsv512` isn't nearly as portable or intutive as `bsv`, but if your priority is doing these calculations as fast as possible, it's hard to ignore exactly how much faster `bsv512` is.
 
 One other thing of note is how across-the-board bad `bs` is. `scatter` and `gather` combined with cache thrashing is just too much overhead. Even when you use `bs` naively, the results are bad, because the compiler cannot autovectorize it easily.
 
