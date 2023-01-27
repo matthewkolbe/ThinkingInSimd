@@ -1,7 +1,6 @@
 // Copyright 2023 Matthew Kolbe
-
+#include <benchmark/benchmark.h>
 #include "black_scholes.hpp"
-#include "ubench.h"
 #include "vcl/vectorclass.h"
 #include "vec_black_scholes.hpp"
 #include <cassert>
@@ -14,7 +13,7 @@
 #include <chrono>
 #include <omp.h>
 
-// compile with: g++ main.cpp -std=c++20 -O3 -lm -lstdc++ -march=native -fopenmp
+// compile with: g++ main.cpp -std=c++20 -O3 -lm -lstdc++ -march=native -fopenmp -ffast-math  -lbenchmark -lpthread
 // format with: clang-format main.cpp -i -style=Microsoft
 
 #define SIZE_N (1600 * 32)
@@ -29,24 +28,6 @@
 #define BS_THEO 7, 15, 23, 31, 39, 47, 55, 63, 71, 79, 87, 95, 103, 111, 119, 127
 
 #define THRD (32)
-
-static Vec16f WarmAvx(Vec16f seed)
-{
-    for(int i =0; i<10000; ++i){
-        seed *= 1.000001;
-    }
-
-    return seed;
-}
-
-static double WarmReg(double seed)
-{
-    for(int i =0; i<10000; ++i){
-        seed *= 1.000001;
-    }
-
-    return seed;
-}
 
 union V16 {
     Vec16f vcl;
@@ -134,9 +115,7 @@ struct alignas(4096) bsv512
     V16 *__restrict__ theo;
 };
 
-UBENCH_MAIN();
-
-UBENCH_EX(iv, naive_bsv)
+static void iv_naive_bsv(benchmark::State& state)
 {
     std::srand(1);
     bsv data;
@@ -151,10 +130,7 @@ UBENCH_EX(iv, naive_bsv)
         data.px[i] = bsPrice(data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.vol[i]);
     }
 
-    double warm = WarmReg(1.0);
-    UBENCH_DO_NOTHING(&warm);
-
-    UBENCH_DO_BENCHMARK()
+    for (auto _ : state)
     {
         for (auto i = 0; i < SIZE_N; ++i)
         {
@@ -167,8 +143,9 @@ UBENCH_EX(iv, naive_bsv)
         assert(std::abs(data.iv[i] - data.vol[i]) <= 1e-4);
     }
 }
+BENCHMARK(iv_naive_bsv);
 
-UBENCH_EX(iv, naive_bs)
+static void iv_naive_bs(benchmark::State& state)
 {
     std::srand(1);
     alignas(4096) bs *__restrict__ data = new bs[SIZE_N];
@@ -183,10 +160,7 @@ UBENCH_EX(iv, naive_bs)
         data[i].px = bsPrice(data[i].ul, data[i].tte, data[i].strike, data[i].rate, data[i].vol);
     }
 
-    double warm = WarmReg(1.0);
-    UBENCH_DO_NOTHING(&warm);
-
-    UBENCH_DO_BENCHMARK()
+    for (auto _ : state)
     {
         for (auto i = 0; i < SIZE_N; ++i)
         {
@@ -201,8 +175,9 @@ UBENCH_EX(iv, naive_bs)
 
     delete[] data;
 }
+BENCHMARK(iv_naive_bs);
 
-UBENCH_EX(iv, avx_bsv)
+static void iv_avx_bsv(benchmark::State& state)
 {
     std::srand(1);
     alignas(4096) bsv data;
@@ -218,10 +193,7 @@ UBENCH_EX(iv, avx_bsv)
         data.iv[i] = 0.0;
     }
 
-    Vec16f warm = WarmAvx(1.0);
-    UBENCH_DO_NOTHING(&warm);;
-
-    UBENCH_DO_BENCHMARK()
+    for (auto _ : state)
     {
         Vec16f u, t, s, r, p;
         for (auto i = 0; i < SIZE_N; i += 16)
@@ -238,8 +210,9 @@ UBENCH_EX(iv, avx_bsv)
     for (auto i = 0; i < SIZE_N; ++i)
         assert(std::abs(data.iv[i] - data.vol[i]) <= 1e-4);
 }
+BENCHMARK(iv_avx_bsv);
 
-UBENCH_EX(iv, avx_bsv_omp)
+static void iv_avx_bsv_omp(benchmark::State& state)
 {
     std::srand(1);
     bsv data;
@@ -257,12 +230,9 @@ UBENCH_EX(iv, avx_bsv_omp)
         data.iv[i] = 0.0;
     }
 
-    Vec16f warm = WarmAvx(1.0);
-    UBENCH_DO_NOTHING(&warm);
-
     const size_t N = SIZE_N / (THRD);
 
-    UBENCH_DO_BENCHMARK()
+    for (auto _ : state)
     {
 #pragma omp parallel
         {
@@ -280,8 +250,9 @@ UBENCH_EX(iv, avx_bsv_omp)
     for (auto i = 0; i < SIZE_N; ++i)
         assert(std::abs(data.iv[i] - data.vol[i]) <= 1e-4);
 }
+BENCHMARK(iv_avx_bsv_omp);
 
-UBENCH_EX(iv, avx_bsv512)
+static void iv_avx_bsv512(benchmark::State& state)
 {
     std::srand(1);
     bsv512 data;
@@ -297,10 +268,7 @@ UBENCH_EX(iv, avx_bsv512)
         data.iv[i].vcl = 0.0;
     }
 
-    Vec16f warm = WarmAvx(1.0);
-    UBENCH_DO_NOTHING(&warm);
-
-    UBENCH_DO_BENCHMARK()
+    for (auto _ : state)
     {
         for (auto i = 0; i < SIZE_N / 16; i++)
             data.iv[i].vcl = bisectIVVec(data.ul[i].vcl, data.tte[i].vcl, data.strike[i].vcl, data.rate[i].vcl, data.px[i].vcl);
@@ -310,8 +278,9 @@ UBENCH_EX(iv, avx_bsv512)
         for (auto j = 0; j < 16; ++j)
             assert(std::abs(data.iv[i].array[j] - data.vol[i].array[j]) <= 1e-4);
 }
+BENCHMARK(iv_avx_bsv512);
 
-UBENCH_EX(iv, avx_bsv512_omp)
+static void iv_avx_bsv512_omp(benchmark::State& state)
 {
     std::srand(1);
     bsv512 data;
@@ -330,10 +299,7 @@ UBENCH_EX(iv, avx_bsv512_omp)
     }
     const size_t N = SIZE_N / (16 * THRD);
 
-    Vec16f warm = WarmAvx(1.0);
-    UBENCH_DO_NOTHING(&warm);
-
-    UBENCH_DO_BENCHMARK()
+    for (auto _ : state)
     {
 #pragma omp parallel
         {
@@ -347,8 +313,9 @@ UBENCH_EX(iv, avx_bsv512_omp)
         for (auto j = 0; j < 16; ++j)
             assert(std::abs(data.iv[i].array[j] - data.vol[i].array[j]) <= 1e-4);
 }
+BENCHMARK(iv_avx_bsv512_omp);
 
-UBENCH_EX(iv, avx_bs)
+static void iv_avx_bs(benchmark::State& state)
 {
     std::srand(1);
     alignas(4096) bs *__restrict__ data = new bs[SIZE_N];
@@ -365,10 +332,7 @@ UBENCH_EX(iv, avx_bs)
         data[i].theo = 0.0;
     }
 
-    Vec16f warm = WarmAvx(1.0);
-    UBENCH_DO_NOTHING(&warm);
-
-    UBENCH_DO_BENCHMARK()
+    for (auto _ : state)
     {
         for (auto i = 0; i < SIZE_N; i += 16)
         {
@@ -386,8 +350,9 @@ UBENCH_EX(iv, avx_bs)
 
     delete[] data;
 }
+BENCHMARK(iv_avx_bs);
 
-UBENCH_EX(iv, avx_bs_omp)
+static void iv_avx_bs_omp(benchmark::State& state)
 {
     std::srand(1);
     alignas(4096) bs *__restrict__ data = new bs[SIZE_N];
@@ -405,10 +370,8 @@ UBENCH_EX(iv, avx_bs_omp)
     }
 
     const size_t N = SIZE_N / THRD;
-    Vec16f warm = WarmAvx(1.0);
-    UBENCH_DO_NOTHING(&warm);
 
-    UBENCH_DO_BENCHMARK()
+    for (auto _ : state)
     {
 #pragma omp parallel
         {
@@ -430,8 +393,9 @@ UBENCH_EX(iv, avx_bs_omp)
 
     delete[] data;
 }
+BENCHMARK(iv_avx_bs_omp);
 
-UBENCH_EX(pricer, naive_bsv)
+static void pricer_naive_bsv(benchmark::State& state)
 {
     std::srand(1);
     bsv data;
@@ -445,18 +409,16 @@ UBENCH_EX(pricer, naive_bsv)
         data.vol[i] = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
     }
 
-    double warm = WarmReg(1.0);
-    UBENCH_DO_NOTHING(&warm);
-
-    UBENCH_DO_BENCHMARK()
+    for (auto _ : state)
     {
 
         for (auto i = 0; i < SIZE_N; ++i)
             data.px[i] = bsPrice(data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.vol[i]);
     }
 }
+BENCHMARK(pricer_naive_bsv);
 
-UBENCH_EX(pricer, naive_bs)
+static void pricer_naive_bs(benchmark::State& state)
 {
     std::srand(1);
     alignas(4096) bs *__restrict__ data = new bs[SIZE_N];
@@ -470,10 +432,7 @@ UBENCH_EX(pricer, naive_bs)
         data[i].vol = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
     }
 
-    double warm = WarmReg(1.0);
-    UBENCH_DO_NOTHING(&warm);
-
-    UBENCH_DO_BENCHMARK()
+    for (auto _ : state)
     {
 
         for (auto i = 0; i < SIZE_N; ++i)
@@ -482,8 +441,9 @@ UBENCH_EX(pricer, naive_bs)
 
     delete[] data;
 }
+BENCHMARK(pricer_naive_bs);
 
-UBENCH_EX(pricer, avx_bsv)
+static void pricer_avx_bsv(benchmark::State& state)
 {
     std::srand(1);
     bsv data;
@@ -497,10 +457,7 @@ UBENCH_EX(pricer, avx_bsv)
         data.vol[i] = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
     }
 
-    auto warm = WarmAvx(1.0);
-    UBENCH_DO_NOTHING(&warm);
-
-    UBENCH_DO_BENCHMARK()
+    for (auto _ : state)
     {
         Vec16f u, t, s, r, v;
         for (auto i = 0; i < SIZE_N; i += 16)
@@ -512,8 +469,9 @@ UBENCH_EX(pricer, avx_bsv)
         }
     }
 }
+BENCHMARK(pricer_avx_bsv);
 
-UBENCH_EX(pricer, avx_bsv_omp)
+static void pricer_avx_bsv_omp(benchmark::State& state)
 {
     std::srand(1);
     bsv data;
@@ -530,10 +488,7 @@ UBENCH_EX(pricer, avx_bsv_omp)
     }
     const size_t N = SIZE_N / (THRD);
 
-    auto warm = WarmAvx(1.0);
-    UBENCH_DO_NOTHING(&warm);
-
-    UBENCH_DO_BENCHMARK()
+    for (auto _ : state)
     {
 #pragma omp parallel
         {
@@ -546,8 +501,9 @@ UBENCH_EX(pricer, avx_bsv_omp)
         }
     }
 }
+BENCHMARK(pricer_avx_bsv_omp);
 
-UBENCH_EX(pricer, avx_bsv512)
+static void pricer_avx_bsv512(benchmark::State& state)
 {
     std::srand(1);
     bsv512 data;
@@ -562,17 +518,15 @@ UBENCH_EX(pricer, avx_bsv512)
         data.px[i].vcl = bsPriceVec(data.ul[i].vcl, data.tte[i].vcl, data.strike[i].vcl, data.rate[i].vcl, data.vol[i].vcl);
     }
 
-    auto warm = WarmAvx(1.0);
-    UBENCH_DO_NOTHING(&warm);
-
-    UBENCH_DO_BENCHMARK()
+    for (auto _ : state)
     {
         for (auto i = 0; i < SIZE_N / 16; i++)
             data.px[i].vcl = bsPriceVec(data.ul[i].vcl, data.tte[i].vcl, data.strike[i].vcl, data.rate[i].vcl, data.vol[i].vcl);
     }
 }
+BENCHMARK(pricer_avx_bsv512);
 
-UBENCH_EX(pricer, avx_bsv512_omp)
+static void pricer_avx_bsv512_omp(benchmark::State& state)
 {
     std::srand(1);
     bsv512 data;
@@ -589,10 +543,7 @@ UBENCH_EX(pricer, avx_bsv512_omp)
     }
     const size_t N = SIZE_N / (16 * THRD);
 
-    auto warm = WarmAvx(1.0);
-    UBENCH_DO_NOTHING(&warm);
-
-    UBENCH_DO_BENCHMARK()
+    for (auto _ : state)
     {
 #pragma omp parallel
         {
@@ -602,8 +553,9 @@ UBENCH_EX(pricer, avx_bsv512_omp)
         }
     }
 }
+BENCHMARK(pricer_avx_bsv512_omp);
 
-UBENCH_EX(pricer, avx_bs)
+static void pricer_avx_bs(benchmark::State& state)
 {
     std::srand(1);
     alignas(4096) bs *__restrict__ data = new bs[SIZE_N];
@@ -617,7 +569,7 @@ UBENCH_EX(pricer, avx_bs)
         data[i].vol = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
     }
 
-    UBENCH_DO_BENCHMARK()
+    for (auto _ : state)
     {
         for (auto i = 0; i < SIZE_N; i += 16)
         {
@@ -632,8 +584,9 @@ UBENCH_EX(pricer, avx_bs)
 
     delete[] data;
 }
+BENCHMARK(pricer_avx_bs);
 
-UBENCH_EX(pricer, avx_bs_omp)
+static void pricer_avx_bs_omp(benchmark::State& state)
 {
     std::srand(1);
     alignas(4096) bs *__restrict__ data = new bs[SIZE_N];
@@ -651,10 +604,7 @@ UBENCH_EX(pricer, avx_bs_omp)
 
     const size_t N = SIZE_N / THRD;
 
-    auto warm = WarmAvx(1.0);
-    UBENCH_DO_NOTHING(&warm);
-
-    UBENCH_DO_BENCHMARK()
+    for (auto _ : state)
     {
 #pragma omp parallel
         {
@@ -673,8 +623,9 @@ UBENCH_EX(pricer, avx_bs_omp)
 
     delete[] data;
 }
+BENCHMARK(pricer_avx_bs_omp);
 
-UBENCH_EX(vol_edge, naive_bsv512)
+static void vol_edge_naive_bsv512(benchmark::State& state)
 {
     std::srand(1);
     bsv512 data;
@@ -685,19 +636,19 @@ UBENCH_EX(vol_edge, naive_bsv512)
         data.vol[i].vcl = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
     }
 
-    UBENCH_DO_BENCHMARK()
+    auto theo = (float*__restrict__)data.theo;
+    auto iv = (float*__restrict__)data.iv;
+    auto vol = (float*__restrict__)data.vol;
+
+    for (auto _ : state)
     {
-        auto theo = (float*__restrict__)data.theo;
-        auto iv = (float*__restrict__)data.iv;
-        auto vol = (float*__restrict__)data.vol;
-        
         for (auto i = 0; i < SIZE_N; ++i)
             theo[i] = std::abs(iv[i] - vol[i]);
     }
 }
+BENCHMARK(vol_edge_naive_bsv512);
 
-
-UBENCH_EX(vol_edge, naive_bsv)
+static void vol_edge_naive_bsv(benchmark::State& state)
 {
     std::srand(1);
     bsv data;
@@ -708,16 +659,16 @@ UBENCH_EX(vol_edge, naive_bsv)
         data.vol[i] = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
     }
 
-    UBENCH_DO_BENCHMARK()
+    for (auto _ : state)
     {
 
         for (auto i = 0; i < SIZE_N; ++i)
             data.theo[i] = std::abs(data.iv[i] - data.vol[i]);
     }
 }
+BENCHMARK(vol_edge_naive_bsv);
 
-
-UBENCH_EX(vol_edge, naive_bs)
+static void vol_edge_naive_bs(benchmark::State& state)
 {
     std::srand(1);
     alignas(4096) bs *__restrict__ data = new bs[SIZE_N];
@@ -728,7 +679,7 @@ UBENCH_EX(vol_edge, naive_bs)
         data[i].vol = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
     }
 
-    UBENCH_DO_BENCHMARK()
+    for (auto _ : state)
     {
 
         for (auto i = 0; i < SIZE_N; ++i)
@@ -737,8 +688,9 @@ UBENCH_EX(vol_edge, naive_bs)
 
     delete[] data;
 }
+BENCHMARK(vol_edge_naive_bs);
 
-UBENCH_EX(vol_edge, avx_bsv)
+static void vol_edge_avx_bsv(benchmark::State& state)
 {
     std::srand(1);
     bsv data;
@@ -749,15 +701,16 @@ UBENCH_EX(vol_edge, avx_bsv)
         data.vol[i] = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
     }
 
-    UBENCH_DO_BENCHMARK()
+    for (auto _ : state)
     {
         Vec16f v, vi;
         for (auto i = 0; i < SIZE_N; i += 16)
             abs(v.load(data.vol + i) - vi.load(data.iv + i)).store(data.theo + i);
     }
 }
+BENCHMARK(vol_edge_avx_bsv);
 
-UBENCH_EX(vol_edge, avx_unrolled_bsv)
+static void vol_edge_avx_unrolled_bsv(benchmark::State& state)
 {
     std::srand(1);
     bsv data;
@@ -769,39 +722,64 @@ UBENCH_EX(vol_edge, avx_unrolled_bsv)
         data.theo[i] = 0.0;
     }
 
-    UBENCH_DO_BENCHMARK()
+    for (auto _ : state)
     {
-        Vec16f v0, vi0;
-        Vec16f v1, vi1;
-        Vec16f v2, vi2;
-        Vec16f v3, vi3;
-        for (auto i = 0; i < SIZE_N; i += 64)
+        Vec16f v0, iv0;
+        Vec16f v1, iv1;
+        Vec16f v2, iv2;
+        Vec16f v3, iv3;
+        Vec16f v4, iv4;
+        Vec16f v5, iv5;
+        Vec16f v6, iv6;
+        Vec16f v7, iv7;
+        for (auto i = 0; i < SIZE_N; i += 128)
         {
             v0.load(data.vol + i);
             v1.load(data.vol + i + 16);
             v2.load(data.vol + i + 32);
             v3.load(data.vol + i + 48);
-            vi0.load(data.iv + i);
-            vi1.load(data.iv + i + 16);
-            vi2.load(data.iv + i + 32);
-            vi3.load(data.iv + i + 48);
-            v0 -= vi0;
-            v1 -= vi1;
-            v2 -= vi2;
-            v3 -= vi3;
-            vi0 = abs(v0);
-            vi1 = abs(v1);
-            vi2 = abs(v2);
-            vi3 = abs(v3);
-            vi0.store(data.theo + i);
-            vi1.store(data.theo + i + 16);
-            vi2.store(data.theo + i + 32);
-            vi3.store(data.theo + i + 48);
+            v4.load(data.vol + i + 64);
+            v5.load(data.vol + i + 80);
+            v6.load(data.vol + i + 96);
+            v7.load(data.vol + i + 112);
+            iv0.load(data.iv + i);
+            iv1.load(data.iv + i + 16);
+            iv2.load(data.iv + i + 32);
+            iv3.load(data.iv + i + 48);
+            iv4.load(data.iv + i + 64);
+            iv5.load(data.iv + i + 80);
+            iv6.load(data.iv + i + 96);
+            iv7.load(data.iv + i + 112);
+            v0 -= iv0;
+            v1 -= iv1;
+            v2 -= iv2;
+            v3 -= iv3;
+            v4 -= iv4;
+            v5 -= iv5;
+            v6 -= iv6;
+            v7 -= iv7;
+            iv0 = abs(v0);
+            iv1 = abs(v1);
+            iv2 = abs(v2);
+            iv3 = abs(v3);
+            iv4 = abs(v4);
+            iv5 = abs(v5);
+            iv6 = abs(v6);
+            iv7 = abs(v7);
+            iv0.store(data.theo + i);
+            iv1.store(data.theo + i + 16);
+            iv2.store(data.theo + i + 32);
+            iv3.store(data.theo + i + 48);
+            iv4.store(data.theo + i + 64);
+            iv5.store(data.theo + i + 80);
+            iv6.store(data.theo + i + 96);
+            iv7.store(data.theo + i + 112);
         }
     }
 }
+BENCHMARK(vol_edge_avx_unrolled_bsv);
 
-UBENCH_EX(vol_edge, avx_bsv512)
+static void vol_edge_avx_bsv512(benchmark::State& state)
 {
     std::srand(1);
     bsv512 data;
@@ -812,15 +790,16 @@ UBENCH_EX(vol_edge, avx_bsv512)
         data.vol[i].vcl = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
     }
 
-    UBENCH_DO_BENCHMARK()
+    for (auto _ : state)
     {
 
         for (auto i = 0; i < SIZE_N / 16; ++i)
             data.theo[i].vcl = abs(data.vol[i].vcl - data.iv[i].vcl);
     }
 }
+BENCHMARK(vol_edge_avx_bsv512);
 
-UBENCH_EX(vol_edge, avx_unrolled_bsv512)
+static void vol_edge_avx_unrolled_bsv512(benchmark::State& state)
 {
     std::srand(1);
     bsv512 data;
@@ -832,26 +811,50 @@ UBENCH_EX(vol_edge, avx_unrolled_bsv512)
         data.theo[i].vcl = 0.0;
     }
 
-    UBENCH_DO_BENCHMARK()
+    for (auto _ : state)
     {
-        Vec16f v0;
-        Vec16f v1;
-        Vec16f v2;
-        Vec16f v3;
-        for (auto i = 0; i < SIZE_N / 16; i += 4)
+        Vec16f v0, iv0;
+        Vec16f v1, iv1;
+        Vec16f v2, iv2;
+        Vec16f v3, iv3;
+        Vec16f v4, iv4;
+        Vec16f v5, iv5;
+        Vec16f v6, iv6;
+        Vec16f v7, iv7;
+        for (auto i = 0; i < SIZE_N / 16; i += 8)
         {
             v0 = data.vol[i].vcl;
             v1 = data.vol[i + 1].vcl;
             v2 = data.vol[i + 2].vcl;
             v3 = data.vol[i + 3].vcl;
-            v0 -= data.iv[i].vcl;
-            v1 -= data.iv[i + 1].vcl;
-            v2 -= data.iv[i + 2].vcl;
-            v3 -= data.iv[i + 3].vcl;
+            v4 = data.vol[i + 4].vcl;
+            v5 = data.vol[i + 5].vcl;
+            v6 = data.vol[i + 6].vcl;
+            v7 = data.vol[i + 7].vcl;
+            iv0 = data.iv[i].vcl;
+            iv1 = data.iv[i + 1].vcl;
+            iv2 = data.iv[i + 2].vcl;
+            iv3 = data.iv[i + 3].vcl;
+            iv4 = data.iv[i + 4].vcl;
+            iv5 = data.iv[i + 5].vcl;
+            iv6 = data.iv[i + 6].vcl;
+            iv7 = data.iv[i + 7].vcl;
+            v0 -= iv0; 
+            v1 -= iv1; 
+            v2 -= iv2; 
+            v3 -= iv3; 
+            v4 -= iv4; 
+            v5 -= iv5; 
+            v6 -= iv6; 
+            v7 -= iv7; 
             data.theo[i].vcl = abs(v0);
             data.theo[i + 1].vcl = abs(v1);
             data.theo[i + 2].vcl = abs(v2);
             data.theo[i + 3].vcl = abs(v3);
+            data.theo[i + 4].vcl = abs(v4);
+            data.theo[i + 5].vcl = abs(v5);
+            data.theo[i + 6].vcl = abs(v6);
+            data.theo[i + 7].vcl = abs(v7);
         }
     }
 
@@ -863,8 +866,9 @@ UBENCH_EX(vol_edge, avx_unrolled_bsv512)
         }
     }
 }
+BENCHMARK(vol_edge_avx_unrolled_bsv512);
 
-UBENCH_EX(vol_edge, avx_bs)
+static void vol_edge_avx_bs(benchmark::State& state)
 {
     std::srand(1);
     alignas(2048) bs *__restrict__ data = new bs[SIZE_N];
@@ -875,7 +879,7 @@ UBENCH_EX(vol_edge, avx_bs)
         data[i].iv = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
     }
 
-    UBENCH_DO_BENCHMARK()
+    for (auto _ : state)
     {
         for (auto i = 0; i < SIZE_N; i += 16)
         {
@@ -887,8 +891,9 @@ UBENCH_EX(vol_edge, avx_bs)
 
     delete[] data;
 }
+BENCHMARK(vol_edge_avx_bs);
 
-UBENCH_EX(vol_edge, avx_unrolled_bs)
+static void vol_edge_avx_unrolled_bs(benchmark::State& state)
 {
     std::srand(1);
     alignas(2048) bs *__restrict__ data = new bs[SIZE_N];
@@ -899,7 +904,7 @@ UBENCH_EX(vol_edge, avx_unrolled_bs)
         data[i].iv = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
     }
 
-    UBENCH_DO_BENCHMARK()
+    for (auto _ : state)
     {
         Vec16f v0, vi0;
         Vec16f v1, vi1;
@@ -924,3 +929,6 @@ UBENCH_EX(vol_edge, avx_unrolled_bs)
 
     delete[] data;
 }
+BENCHMARK(vol_edge_avx_unrolled_bs);
+
+BENCHMARK_MAIN();
