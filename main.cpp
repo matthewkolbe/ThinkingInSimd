@@ -9,6 +9,7 @@
 #include <immintrin.h>
 #include <iostream>
 #include <memory>
+#include <immintrin.h>
 #include <omp.h>
 
 // compile with: g++ main.cpp -std=c++20 -O3 -lm -lstdc++ -march=native -fopenmp
@@ -26,6 +27,12 @@
 #define BS_THEO 7, 15, 23, 31, 39, 47, 55, 63, 71, 79, 87, 95, 103, 111, 119, 127
 
 #define THRD (32)
+
+union V16 {
+    Vec16f vcl;
+    float array[16];
+    __m512 intr;
+};
 
 struct alignas(32) bs
 {
@@ -75,14 +82,14 @@ struct alignas(4096) bsv512
   public:
     bsv512()
     {
-        ul = new Vec16f[SIZE_N / 16];
-        tte = new Vec16f[SIZE_N / 16];
-        strike = new Vec16f[SIZE_N / 16];
-        rate = new Vec16f[SIZE_N / 16];
-        vol = new Vec16f[SIZE_N / 16];
-        iv = new Vec16f[SIZE_N / 16];
-        px = new Vec16f[SIZE_N / 16];
-        theo = new Vec16f[SIZE_N / 16];
+        ul      = new V16[SIZE_N / 16];
+        tte     = new V16[SIZE_N / 16];
+        strike  = new V16[SIZE_N / 16];
+        rate    = new V16[SIZE_N / 16];
+        vol     = new V16[SIZE_N / 16];
+        iv      = new V16[SIZE_N / 16];
+        px      = new V16[SIZE_N / 16];
+        theo    = new V16[SIZE_N / 16];
     }
 
     ~bsv512()
@@ -97,14 +104,14 @@ struct alignas(4096) bsv512
         delete[] theo;
     }
 
-    Vec16f *__restrict__ ul;
-    Vec16f *__restrict__ tte;
-    Vec16f *__restrict__ strike;
-    Vec16f *__restrict__ rate;
-    Vec16f *__restrict__ iv;
-    Vec16f *__restrict__ vol;
-    Vec16f *__restrict__ px;
-    Vec16f *__restrict__ theo;
+    V16 *__restrict__ ul;
+    V16 *__restrict__ tte;
+    V16 *__restrict__ strike;
+    V16 *__restrict__ rate;
+    V16 *__restrict__ iv;
+    V16 *__restrict__ vol;
+    V16 *__restrict__ px;
+    V16 *__restrict__ theo;
 };
 
 UBENCH_MAIN();
@@ -249,24 +256,24 @@ UBENCH_EX(iv, avx_bsv512)
 
     for (auto i = 0; i < SIZE_N / 16; ++i)
     {
-        data.ul[i] = 100.0;
-        data.tte[i] = 0.3;
-        data.strike[i] = 110.0;
-        data.rate[i] = 0.05;
-        data.vol[i] = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-        data.px[i] = bsPriceVec(data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.vol[i]);
-        data.iv[i] = 0.0;
+        data.ul[i].vcl = 100.0;
+        data.tte[i].vcl = 0.3;
+        data.strike[i].vcl = 110.0;
+        data.rate[i].vcl = 0.05;
+        data.vol[i].vcl = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+        data.px[i].vcl = bsPriceVec(data.ul[i].vcl, data.tte[i].vcl, data.strike[i].vcl, data.rate[i].vcl, data.vol[i].vcl);
+        data.iv[i].vcl = 0.0;
     }
 
     UBENCH_DO_BENCHMARK()
     {
         for (auto i = 0; i < SIZE_N / 16; i++)
-            data.iv[i] = bisectIVVec(data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.px[i]);
+            data.iv[i].vcl = bisectIVVec(data.ul[i].vcl, data.tte[i].vcl, data.strike[i].vcl, data.rate[i].vcl, data.px[i].vcl);
     }
 
     for (auto i = 0; i < SIZE_N / 16; ++i)
         for (auto j = 0; j < 16; ++j)
-            assert(std::abs(data.iv[i].extract(j) - data.vol[i].extract(j)) <= 1e-4);
+            assert(std::abs(data.iv[i].array[j] - data.vol[i].array[j]) <= 1e-4);
 }
 
 UBENCH_EX(iv, avx_bsv512_omp)
@@ -278,13 +285,13 @@ UBENCH_EX(iv, avx_bsv512_omp)
 
     for (auto i = 0; i < SIZE_N / 16; ++i)
     {
-        data.ul[i] = 100.0;
-        data.tte[i] = 0.3;
-        data.strike[i] = 110.0;
-        data.rate[i] = 0.05;
-        data.vol[i] = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-        data.px[i] = bsPriceVec(data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.vol[i]);
-        data.iv[i] = 0.0;
+        data.ul[i].vcl = 100.0;
+        data.tte[i].vcl = 0.3;
+        data.strike[i].vcl = 110.0;
+        data.rate[i].vcl = 0.05;
+        data.vol[i].vcl = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+        data.px[i].vcl = bsPriceVec(data.ul[i].vcl, data.tte[i].vcl, data.strike[i].vcl, data.rate[i].vcl, data.vol[i].vcl);
+        data.iv[i].vcl = 0.0;
     }
     const size_t N = SIZE_N / (16 * THRD);
 
@@ -294,13 +301,13 @@ UBENCH_EX(iv, avx_bsv512_omp)
         {
             size_t ii = omp_get_thread_num();
             for (auto i = ii * N; i < (ii + 1) * N; i++)
-                data.iv[i] = bisectIVVec(data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.px[i]);
+                data.iv[i].vcl = bisectIVVec(data.ul[i].vcl, data.tte[i].vcl, data.strike[i].vcl, data.rate[i].vcl, data.px[i].vcl);
         }
     }
 
     for (auto i = 0; i < SIZE_N / 16; ++i)
         for (auto j = 0; j < 16; ++j)
-            assert(std::abs(data.iv[i].extract(j) - data.vol[i].extract(j)) <= 1e-4);
+            assert(std::abs(data.iv[i].array[j] - data.vol[i].array[j]) <= 1e-4);
 }
 
 UBENCH_EX(iv, avx_bs)
@@ -492,18 +499,18 @@ UBENCH_EX(pricer, avx_bsv512)
 
     for (auto i = 0; i < SIZE_N / 16; ++i)
     {
-        data.ul[i] = 100.0;
-        data.tte[i] = 0.3;
-        data.strike[i] = 110.0;
-        data.rate[i] = 0.05;
-        data.vol[i] = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-        data.px[i] = bsPriceVec(data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.vol[i]);
+        data.ul[i].vcl = 100.0;
+        data.tte[i].vcl = 0.3;
+        data.strike[i].vcl = 110.0;
+        data.rate[i].vcl = 0.05;
+        data.vol[i].vcl = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+        data.px[i].vcl = bsPriceVec(data.ul[i].vcl, data.tte[i].vcl, data.strike[i].vcl, data.rate[i].vcl, data.vol[i].vcl);
     }
 
     UBENCH_DO_BENCHMARK()
     {
         for (auto i = 0; i < SIZE_N / 16; i++)
-            data.px[i] = bsPriceVec(data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.vol[i]);
+            data.px[i].vcl = bsPriceVec(data.ul[i].vcl, data.tte[i].vcl, data.strike[i].vcl, data.rate[i].vcl, data.vol[i].vcl);
     }
 }
 
@@ -516,11 +523,11 @@ UBENCH_EX(pricer, avx_bsv512_omp)
 
     for (auto i = 0; i < SIZE_N / 16; ++i)
     {
-        data.ul[i] = 100.0;
-        data.tte[i] = 0.3;
-        data.strike[i] = 110.0;
-        data.rate[i] = 0.05;
-        data.vol[i] = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+        data.ul[i].vcl = 100.0;
+        data.tte[i].vcl = 0.3;
+        data.strike[i].vcl = 110.0;
+        data.rate[i].vcl = 0.05;
+        data.vol[i].vcl = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
     }
     const size_t N = SIZE_N / (16 * THRD);
 
@@ -530,7 +537,7 @@ UBENCH_EX(pricer, avx_bsv512_omp)
         {
             size_t ii = omp_get_thread_num();
             for (auto i = ii * N; i < (ii + 1) * N; i++)
-                data.px[i] = bsPriceVec(data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.vol[i]);
+                data.px[i].vcl = bsPriceVec(data.ul[i].vcl, data.tte[i].vcl, data.strike[i].vcl, data.rate[i].vcl, data.vol[i].vcl);
         }
     }
 }
@@ -698,10 +705,10 @@ UBENCH_EX(vol_edge, avx_unrolled_bsv)
             vi1 = abs(v1);
             vi2 = abs(v2);
             vi3 = abs(v3);
-            vi0.store(data.theo);
-            vi1.store(data.theo + 16);
-            vi2.store(data.theo + 32);
-            vi3.store(data.theo + 48);
+            vi0.store(data.theo + i);
+            vi1.store(data.theo + i + 16);
+            vi2.store(data.theo + i + 32);
+            vi3.store(data.theo + i + 48);
         }
     }
 }
@@ -713,15 +720,15 @@ UBENCH_EX(vol_edge, avx_bsv512)
 
     for (auto i = 0; i < SIZE_N / 16; ++i)
     {
-        data.iv[i] = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-        data.vol[i] = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+        data.iv[i].vcl = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+        data.vol[i].vcl = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
     }
 
     UBENCH_DO_BENCHMARK()
     {
 
         for (auto i = 0; i < SIZE_N / 16; ++i)
-            data.theo[i] = abs(data.vol[i] - data.iv[i]);
+            data.theo[i].vcl = abs(data.vol[i].vcl - data.iv[i].vcl);
     }
 }
 
@@ -732,9 +739,9 @@ UBENCH_EX(vol_edge, avx_unrolled_bsv512)
 
     for (auto i = 0; i < SIZE_N / 16; ++i)
     {
-        data.iv[i] = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-        data.vol[i] = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-        data.theo[i] = 0.0;
+        data.iv[i].vcl = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+        data.vol[i].vcl = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+        data.theo[i].vcl = 0.0;
     }
 
     UBENCH_DO_BENCHMARK()
@@ -743,20 +750,28 @@ UBENCH_EX(vol_edge, avx_unrolled_bsv512)
         Vec16f v1;
         Vec16f v2;
         Vec16f v3;
-        for (auto i = 0; i < SIZE_N / 16; i += 8)
+        for (auto i = 0; i < SIZE_N / 16; i += 4)
         {
-            v0 = data.vol[i];
-            v1 = data.vol[i + 1];
-            v2 = data.vol[i + 2];
-            v3 = data.vol[i + 3];
-            v0 -= data.iv[i];
-            v1 -= data.iv[i + 1];
-            v2 -= data.iv[i + 2];
-            v3 -= data.iv[i + 3];
-            data.theo[i] = abs(v0);
-            data.theo[i + 1] = abs(v1);
-            data.theo[i + 2] = abs(v2);
-            data.theo[i + 3] = abs(v3);
+            v0 = data.vol[i].vcl;
+            v1 = data.vol[i + 1].vcl;
+            v2 = data.vol[i + 2].vcl;
+            v3 = data.vol[i + 3].vcl;
+            v0 -= data.iv[i].vcl;
+            v1 -= data.iv[i + 1].vcl;
+            v2 -= data.iv[i + 2].vcl;
+            v3 -= data.iv[i + 3].vcl;
+            data.theo[i].vcl = abs(v0);
+            data.theo[i + 1].vcl = abs(v1);
+            data.theo[i + 2].vcl = abs(v2);
+            data.theo[i + 3].vcl = abs(v3);
+        }
+    }
+
+    for(int i = 0; i < SIZE_N/16; ++i) {
+        for(int j = 0; j < 16; ++j) {
+            auto compueted = data.theo[i].array[j];
+            auto test = abs(data.iv[i].array[j] - data.vol[i].array[j]);
+            assert(abs(compueted - test) < 1e-15);
         }
     }
 }
