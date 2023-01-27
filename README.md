@@ -89,28 +89,49 @@ Although I will not be showing this here, `bsv512` has the additional complicati
 
 ## The test
 
-I would like to see how all data structures perform in all compute paradigms. Additionally, I would like to see how it performs single threaded versus using 32 threads via OpenMP (OMP). I chose a value of `N=51200` because it's appropriately large for practical uses, and it divides all my partitions evenly. Of note is that `51200*8*4=1.6MB` for the total data operated on, and my processor has 64K of L1 cache and 1MB of L2 per core. If we want to start exceeding cache, the usefulness of each data structure is bound to change. I use [ubench](https://github.com/sheredom/ubench.h) as the microbenchmarking framework. It's a header-only library that I embedded in this repo, so it should work seamlessly if you'd like to clone this and run the benchmarks yourself. Here are my systems specs:
+I would like to see how all data structures perform in all compute paradigms. Additionally, I would like to see how it performs single threaded versus using 32 threads via OpenMP (OMP). I chose a value of `N=51200` because it's appropriately large for practical uses, and it divides all my partitions evenly. Of note is that `51200*8*4=1.6MB` for the total data operated on, and my processor has 64KB of L1 cache and 1MB of L2 per core. If we want to start exceeding cache, the usefulness of each data structure is bound to change. I use [Google Benchmark](https://github.com/google/benchmark) as the microbenchmarking framework. Here are the results:
 
-<p style="text-align:center;">
-<img src="images/specs.png" width="500">
+Run on (32 X 5881 MHz CPU s)
 
-Compiled with `g++ main.cpp -std=c++20 -O3 -lm -lstdc++ -march=native -fopenmp`.
+CPU Caches:
+- L1 Data 32 KiB (x16)
+- L1 Instruction 32 KiB (x16)
+- L2 Unified 1024 KiB (x16)
+- L3 Unified 32768 KiB (x2)
 
+Load Average: 0.81, 1.04, 0.90
 
-| Syntax      | Long (Imp Vol)   | Medium (Price) | Short (Abs sum) | Short Unrolled |
-| :---------- | ----------- | ----------- | ----------- | --------- |
-| Naive `bsv`  | 23.083ms<br>+- 0.22% | 1.069ms<br>+- 0.71% |  3.792us<br>+- 0.53% | N/A |
-| Naive `bs` | 23.312ms<br>+- 0.18% | 1.074ms<br>+- 0.3% | 20.855us<br>+- 0.44% | N/A |
-| AVX `bsv` | 1.727ms<br>+- 0.32%| 85.285us<br>+- 0.12% | 3.748us<br>+- 0.63% | 3.811us<br>+- 0.563117% |
-| AVX `bs` | 1.854ms<br>+- 0.32% | 150.135us<br>+- 0.45% | 43.022us<br>+- 0.45% | 39.877us<br>+- 0.74% |
-| AVX `bsv512` | 1.538ms<br>+- 0.29% | 84.751us<br>+- 0.14% | 3.973us<br>+- 0.604386% | 3.777us<br>+- 0.917302% |
-| OMP `bsv` | 87.665us<br>+- 0.42% | 7.871us<br>+- 1.31% | N/A | N/A |
-| OMP `bs` | 91.233us<br>+- 0.33% | 13.640us<br>+- 2.22% | N/A | N/A |
-| OMP `bsv512` | 76.961us<br>+- 1.75% | 7.861us<br>+- 1.2% | N/A | N/A |
+|Benchmark                    |          Time|              CPU|   Iterations|
+|:----------------------------|-------------:|----------------:|------------:|
+|iv_naive_bsv                 | 19,345,965 ns|    19,345,938 ns|           36|
+|iv_naive_bs                  | 19,284,717 ns|    19,284,882 ns|           36|
+|iv_avx_bsv                   |  1,695,266 ns|     1,695,281 ns|          411|
+|iv_avx_bsv_omp               |     89,908 ns|        89,909 ns|         7682|
+|iv_avx_bsv512                |  1,493,387 ns|     1,493,389 ns|          453|
+|iv_avx_bsv512_omp            |     78,079 ns|        78,079 ns|         8399|
+|iv_avx_bs                    |  1,750,544 ns|     1,750,552 ns|          389|
+|iv_avx_bs_omp                |     91,852 ns|        91,854 ns|         7531|
+|pricer_naive_bsv             |    216,102 ns|       216,105 ns|         3210|
+|pricer_naive_bs              |    239,462 ns|       239,464 ns|         2922|
+|pricer_avx_bsv               |     76,378 ns|        76,375 ns|         9113|
+|pricer_avx_bsv_omp           |      8,120 ns|         8,120 ns|        79219|
+|pricer_avx_bsv512            |     95,223 ns|        95,223 ns|         7174|
+|pricer_avx_bsv512_omp        |      7,982 ns|         7,982 ns|        74778|
+|pricer_avx_bs                |    152,942 ns|       152,943 ns|         4498|
+|pricer_avx_bs_omp            |     11,329 ns|        11,329 ns|        61423|
+|vol_edge_naive_bsv512        |      3,997 ns|         3,997 ns|       174072|
+|vol_edge_naive_bsv           |      3,613 ns|         3,613 ns|       193195|
+|vol_edge_naive_bs            |     20,501 ns|        20,501 ns|        34116|
+|vol_edge_avx_bsv             |      3,744 ns|         3,744 ns|       186476|
+|vol_edge_avx_unrolled_bsv    |      3,544 ns|         3,544 ns|       197404|
+|vol_edge_avx_bsv512          |      4,000 ns|         4,000 ns|       174787|
+|vol_edge_avx_unrolled_bsv512 |      3,655 ns|         3,655 ns|       191567|
+|vol_edge_avx_bs              |     41,404 ns|        41,404 ns|        16633|
+
 
 ## Analysis
 
-`bsv512` seems to be a clear winner. This is interesting from the perspective of any lesson the glean, because I think it just raises more questions like "what about storing data into it?" I think it's a little unfortunate as well, because `bsv512` isn't nearly as portable or intutive as `bsv`, but if your priority is doing these calculations as fast as possible, it's hard to ignore exactly how much faster `bsv512` is.
+`bsv512` seems to be a winner. This is interesting from the perspective of any lesson the glean, because I think it just raises more questions like "what about storing data into it?" I think it's a little unfortunate as well, because `bsv512` isn't nearly as portable or intutive as `bsv`, but if your priority is doing these calculations as fast as possible, it's hard to ignore exactly how much faster `bsv512` is.
 
 One other thing of note is how across-the-board bad `bs` is. `scatter` and `gather` combined with cache thrashing is just too much overhead. Even when you use `bs` naively, the results are bad, because the compiler cannot autovectorize it easily.
 
