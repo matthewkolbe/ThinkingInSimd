@@ -10,6 +10,8 @@
 #include <iostream>
 #include <memory>
 #include <immintrin.h>
+#include <thread>
+#include <chrono>
 #include <omp.h>
 
 // compile with: g++ main.cpp -std=c++20 -O3 -lm -lstdc++ -march=native -fopenmp
@@ -27,6 +29,24 @@
 #define BS_THEO 7, 15, 23, 31, 39, 47, 55, 63, 71, 79, 87, 95, 103, 111, 119, 127
 
 #define THRD (32)
+
+static Vec16f WarmAvx(Vec16f seed)
+{
+    for(int i =0; i<10000; ++i){
+        seed *= 1.000001;
+    }
+
+    return seed;
+}
+
+static double WarmReg(double seed)
+{
+    for(int i =0; i<10000; ++i){
+        seed *= 1.000001;
+    }
+
+    return seed;
+}
 
 union V16 {
     Vec16f vcl;
@@ -131,6 +151,9 @@ UBENCH_EX(iv, naive_bsv)
         data.px[i] = bsPrice(data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.vol[i]);
     }
 
+    double warm = WarmReg(1.0);
+    UBENCH_DO_NOTHING(&warm);
+
     UBENCH_DO_BENCHMARK()
     {
         for (auto i = 0; i < SIZE_N; ++i)
@@ -160,6 +183,9 @@ UBENCH_EX(iv, naive_bs)
         data[i].px = bsPrice(data[i].ul, data[i].tte, data[i].strike, data[i].rate, data[i].vol);
     }
 
+    double warm = WarmReg(1.0);
+    UBENCH_DO_NOTHING(&warm);
+
     UBENCH_DO_BENCHMARK()
     {
         for (auto i = 0; i < SIZE_N; ++i)
@@ -179,7 +205,7 @@ UBENCH_EX(iv, naive_bs)
 UBENCH_EX(iv, avx_bsv)
 {
     std::srand(1);
-    bsv data;
+    alignas(4096) bsv data;
 
     for (auto i = 0; i < SIZE_N; ++i)
     {
@@ -191,6 +217,9 @@ UBENCH_EX(iv, avx_bsv)
         data.px[i] = bsPrice(data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.vol[i]);
         data.iv[i] = 0.0;
     }
+
+    Vec16f warm = WarmAvx(1.0);
+    UBENCH_DO_NOTHING(&warm);;
 
     UBENCH_DO_BENCHMARK()
     {
@@ -227,6 +256,9 @@ UBENCH_EX(iv, avx_bsv_omp)
         data.px[i] = bsPrice(data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.vol[i]);
         data.iv[i] = 0.0;
     }
+
+    Vec16f warm = WarmAvx(1.0);
+    UBENCH_DO_NOTHING(&warm);
 
     const size_t N = SIZE_N / (THRD);
 
@@ -265,6 +297,9 @@ UBENCH_EX(iv, avx_bsv512)
         data.iv[i].vcl = 0.0;
     }
 
+    Vec16f warm = WarmAvx(1.0);
+    UBENCH_DO_NOTHING(&warm);
+
     UBENCH_DO_BENCHMARK()
     {
         for (auto i = 0; i < SIZE_N / 16; i++)
@@ -294,6 +329,9 @@ UBENCH_EX(iv, avx_bsv512_omp)
         data.iv[i].vcl = 0.0;
     }
     const size_t N = SIZE_N / (16 * THRD);
+
+    Vec16f warm = WarmAvx(1.0);
+    UBENCH_DO_NOTHING(&warm);
 
     UBENCH_DO_BENCHMARK()
     {
@@ -326,6 +364,9 @@ UBENCH_EX(iv, avx_bs)
         data[i].px = bsPrice(data[i].ul, data[i].tte, data[i].strike, data[i].rate, data[i].vol);
         data[i].theo = 0.0;
     }
+
+    Vec16f warm = WarmAvx(1.0);
+    UBENCH_DO_NOTHING(&warm);
 
     UBENCH_DO_BENCHMARK()
     {
@@ -364,6 +405,8 @@ UBENCH_EX(iv, avx_bs_omp)
     }
 
     const size_t N = SIZE_N / THRD;
+    Vec16f warm = WarmAvx(1.0);
+    UBENCH_DO_NOTHING(&warm);
 
     UBENCH_DO_BENCHMARK()
     {
@@ -402,6 +445,9 @@ UBENCH_EX(pricer, naive_bsv)
         data.vol[i] = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
     }
 
+    double warm = WarmReg(1.0);
+    UBENCH_DO_NOTHING(&warm);
+
     UBENCH_DO_BENCHMARK()
     {
 
@@ -423,6 +469,9 @@ UBENCH_EX(pricer, naive_bs)
         data[i].rate = 0.05;
         data[i].vol = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
     }
+
+    double warm = WarmReg(1.0);
+    UBENCH_DO_NOTHING(&warm);
 
     UBENCH_DO_BENCHMARK()
     {
@@ -447,6 +496,9 @@ UBENCH_EX(pricer, avx_bsv)
         data.rate[i] = 0.05;
         data.vol[i] = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
     }
+
+    auto warm = WarmAvx(1.0);
+    UBENCH_DO_NOTHING(&warm);
 
     UBENCH_DO_BENCHMARK()
     {
@@ -478,6 +530,9 @@ UBENCH_EX(pricer, avx_bsv_omp)
     }
     const size_t N = SIZE_N / (THRD);
 
+    auto warm = WarmAvx(1.0);
+    UBENCH_DO_NOTHING(&warm);
+
     UBENCH_DO_BENCHMARK()
     {
 #pragma omp parallel
@@ -507,6 +562,9 @@ UBENCH_EX(pricer, avx_bsv512)
         data.px[i].vcl = bsPriceVec(data.ul[i].vcl, data.tte[i].vcl, data.strike[i].vcl, data.rate[i].vcl, data.vol[i].vcl);
     }
 
+    auto warm = WarmAvx(1.0);
+    UBENCH_DO_NOTHING(&warm);
+
     UBENCH_DO_BENCHMARK()
     {
         for (auto i = 0; i < SIZE_N / 16; i++)
@@ -530,6 +588,9 @@ UBENCH_EX(pricer, avx_bsv512_omp)
         data.vol[i].vcl = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
     }
     const size_t N = SIZE_N / (16 * THRD);
+
+    auto warm = WarmAvx(1.0);
+    UBENCH_DO_NOTHING(&warm);
 
     UBENCH_DO_BENCHMARK()
     {
@@ -590,6 +651,9 @@ UBENCH_EX(pricer, avx_bs_omp)
 
     const size_t N = SIZE_N / THRD;
 
+    auto warm = WarmAvx(1.0);
+    UBENCH_DO_NOTHING(&warm);
+
     UBENCH_DO_BENCHMARK()
     {
 #pragma omp parallel
@@ -610,6 +674,29 @@ UBENCH_EX(pricer, avx_bs_omp)
     delete[] data;
 }
 
+UBENCH_EX(vol_edge, naive_bsv512)
+{
+    std::srand(1);
+    bsv512 data;
+
+    for (auto i = 0; i < SIZE_N/16; ++i)
+    {
+        data.iv[i].vcl = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+        data.vol[i].vcl = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+    }
+
+    UBENCH_DO_BENCHMARK()
+    {
+        auto theo = (float*__restrict__)data.theo;
+        auto iv = (float*__restrict__)data.iv;
+        auto vol = (float*__restrict__)data.vol;
+        
+        for (auto i = 0; i < SIZE_N; ++i)
+            theo[i] = std::abs(iv[i] - vol[i]);
+    }
+}
+
+
 UBENCH_EX(vol_edge, naive_bsv)
 {
     std::srand(1);
@@ -628,6 +715,7 @@ UBENCH_EX(vol_edge, naive_bsv)
             data.theo[i] = std::abs(data.iv[i] - data.vol[i]);
     }
 }
+
 
 UBENCH_EX(vol_edge, naive_bs)
 {
