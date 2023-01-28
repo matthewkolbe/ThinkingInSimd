@@ -101,31 +101,31 @@ CPU Caches:
 
 |Benchmark                    |         Time |            CPU |  Iterations|
 |:----------------------------|-------------:|---------------:|-----------:|
-|iv_naive_bsv                 |19,349,565 ns |  19,349,533 ns |          36|
-|iv_naive_bs                  |19,353,326 ns |  19,353,452 ns |          36|
-|iv_avx_bsv                   | 1,696,959 ns |   1,696,964 ns |         412|
-|iv_avx_bsv_omp               |    89,979 ns |      89,932 ns |        7873|
-|iv_avx_bsv512                | 1,702,175 ns |   1,702,184 ns |         397|
-|iv_avx_bsv512_omp            |    88,954 ns |      88,945 ns |        7030|
-|iv_avx_bs                    | 1,747,800 ns |   1,747,790 ns |         388|
-|iv_avx_bs_omp                |    91,845 ns |      91,841 ns |        7240|
-|pricer_naive_bsv             |   210,987 ns |     210,987 ns |        3289|
-|pricer_naive_bs              |   241,111 ns |     241,111 ns |        2914|
-|pricer_avx_bsv               |    92,044 ns |      92,044 ns |        7533|
-|pricer_avx_bsv_omp           |     7,922 ns |       7,922 ns |       87154|
-|pricer_avx_bsv512            |    93,361 ns |      93,360 ns |        7227|
-|pricer_avx_bsv512_omp        |     7,871 ns |       7,871 ns |       86703|
-|pricer_avx_bs                |   152,723 ns |     152,723 ns |        4506|
-|pricer_avx_bs_omp            |    11,926 ns |      11,926 ns |       62952|
-|vol_edge_naive_bsv512        |     4,142 ns |       4,142 ns |      166972|
-|vol_edge_naive_bsv           |     3,605 ns |       3,605 ns |      193709|
-|vol_edge_naive_bs            |    20,504 ns |      20,504 ns |       34160|
-|vol_edge_avx_bsv             |     3,626 ns |       3,626 ns |      192797|
-|vol_edge_avx_unrolled_bsv    |     3,532 ns |       3,532 ns |      198139|
-|vol_edge_avx_bsv512          |     4,150 ns |       4,150 ns |      168545|
-|vol_edge_avx_unrolled_bsv512 |     3,502 ns |       3,502 ns |      199738|
-|vol_edge_avx_bs              |    41,693 ns |      41,694 ns |       16790|
-|vol_edge_avx_unrolled_bs     |    38,716 ns |      38,716 ns |       18084|
+|iv_naive_bsv                 |   19331.84 us|     19332.05 us|          36|
+|iv_naive_bs                  |   19242.75 us|     19242.84 us|          36|
+|iv_avx_bsv                   |    1578.45 us|      1578.44 us|         443|
+|iv_avx_bsv_omp               |      86.51 us|        86.51 us|        8128|
+|iv_avx_bsv512                |    1581.11 us|      1581.12 us|         427|
+|iv_avx_bsv512_omp            |      84.66 us|        84.64 us|        8201|
+|iv_avx_bs                    |    1630.22 us|      1630.22 us|         413|
+|iv_avx_bs_omp                |      88.39 us|        88.39 us|        7870|
+|pricer_naive_bsv             |     210.47 us|       210.47 us|        3289|
+|pricer_naive_bs              |     240.20 us|       240.20 us|        2910|
+|pricer_avx_bsv               |      91.78 us|        91.78 us|        7566|
+|pricer_avx_bsv_omp           |       7.87 us|         7.87 us|       86628|
+|pricer_avx_bsv512            |      93.23 us|        93.23 us|        7230|
+|pricer_avx_bsv512_omp        |       7.91 us|         7.91 us|       87007|
+|pricer_avx_bs                |     151.85 us|       151.85 us|        4516|
+|pricer_avx_bs_omp            |      10.98 us|        10.98 us|       64396|
+|vol_edge_naive_bsv512        |       4.06 us|         4.06 us|      169738|
+|vol_edge_naive_bsv           |       3.54 us|         3.54 us|      197154|
+|vol_edge_naive_bs            |      20.36 us|        20.36 us|       34433|
+|vol_edge_avx_bsv             |       3.67 us|         3.67 us|      190172|
+|vol_edge_avx_unrolled_bsv    |       3.51 us|         3.51 us|      198970|
+|vol_edge_avx_bsv512          |       4.08 us|         4.08 us|      171374|
+|vol_edge_avx_unrolled_bsv512 |       3.61 us|         3.61 us|      193342|
+|vol_edge_avx_bs              |      41.64 us|        41.64 us|       16774|
+|vol_edge_avx_unrolled_bs     |      38.58 us|        38.58 us|       18138|
 
 ## Analysis
 
