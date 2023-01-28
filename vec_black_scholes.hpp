@@ -65,7 +65,7 @@ inline __attribute__((always_inline)) Vec16f bisectIVVec(const Vec16f& ul, const
         high_vol = (high_vol & (!msk)) + (mid_vol & msk);
         low_vol = (low_vol & msk) + (mid_vol & (!msk));
 
-        mid_vol = 0.5 * (low_vol + high_vol);
+        mid_vol = ((0.5 * (low_vol + high_vol)) & condition) + ((!condition) & mid_vol);
         mid_val = bsPriceVec(ul, tte, strike, rate, mid_vol);
         condition = abs(mid_val - price) > eps;
     }
