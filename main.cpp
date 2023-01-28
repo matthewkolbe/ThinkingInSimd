@@ -28,7 +28,8 @@
 
 #define THRD (32)
 
-union V16 {
+// these are all standard layout types, so type punning on inactive members is okay?
+union alignas(64) V16 {
     Vec16f vcl;
     float array[16];
     __m512 intr;
@@ -256,16 +257,18 @@ static void iv_avx_bsv512(benchmark::State &state)
     std::srand(1);
     bsv512 data;
 
-    for (auto i = 0; i < SIZE_N / 16; ++i)
+    for (auto i = 0; i < SIZE_N/16; ++i)
     {
-        data.ul[i].vcl = 100.0;
-        data.tte[i].vcl = 0.3;
-        data.strike[i].vcl = 110.0;
-        data.rate[i].vcl = 0.05;
-        data.vol[i].vcl = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-        data.px[i].vcl =
-            bsPriceVec(data.ul[i].vcl, data.tte[i].vcl, data.strike[i].vcl, data.rate[i].vcl, data.vol[i].vcl);
-        data.iv[i].vcl = 0.0;
+        for(int j = 0; j < 16; j++){
+            data.ul[i].array[j] = 100.0;
+            data.tte[i].array[j] = 0.3;
+            data.strike[i].array[j] = 110.0;
+            data.rate[i].array[j] = 0.05;
+            data.vol[i].array[j] = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+            data.px[i].array[j] = bsPrice(data.ul[i].array[j] , data.tte[i].array[j] , data.strike[i].array[j], 
+                                data.rate[i].array[j] , data.vol[i].array[j] );
+            data.iv[i].array[j] = 0.0;
+        }
     }
 
     for (auto _ : state)
@@ -288,17 +291,20 @@ static void iv_avx_bsv512_omp(benchmark::State &state)
 
     omp_set_num_threads(THRD);
 
-    for (auto i = 0; i < SIZE_N / 16; ++i)
+    for (auto i = 0; i < SIZE_N/16; ++i)
     {
-        data.ul[i].vcl = 100.0;
-        data.tte[i].vcl = 0.3;
-        data.strike[i].vcl = 110.0;
-        data.rate[i].vcl = 0.05;
-        data.vol[i].vcl = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-        data.px[i].vcl =
-            bsPriceVec(data.ul[i].vcl, data.tte[i].vcl, data.strike[i].vcl, data.rate[i].vcl, data.vol[i].vcl);
-        data.iv[i].vcl = 0.0;
+        for(int j = 0; j < 16; j++){
+            data.ul[i].array[j] = 100.0;
+            data.tte[i].array[j] = 0.3;
+            data.strike[i].array[j] = 110.0;
+            data.rate[i].array[j] = 0.05;
+            data.vol[i].array[j] = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+            data.px[i].array[j] = bsPrice(data.ul[i].array[j] , data.tte[i].array[j] , data.strike[i].array[j], 
+                                data.rate[i].array[j] , data.vol[i].array[j] );
+            data.iv[i].array[j] = 0.0;
+        }
     }
+
     const size_t N = SIZE_N / (16 * THRD);
 
     for (auto _ : state)
@@ -458,6 +464,7 @@ static void pricer_avx_bsv(benchmark::State &state)
         data.strike[i] = 110.0;
         data.rate[i] = 0.05;
         data.vol[i] = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+        data.theo[i] = bsPrice(data.ul[i], data.tte[i], data.strike[i], data.rate[i], data.vol[i]);
     }
 
     for (auto _ : state)
@@ -467,10 +474,13 @@ static void pricer_avx_bsv(benchmark::State &state)
         {
             v.load(data.vol + i);
             t.load(data.tte + i);
-
-            bsPriceVec(u.load(data.ul + i), t, u.load(data.strike + i), r.load(data.rate + i), v).store(data.px + i);
+            _mm_prefetch((void*)(data.px + i),_MM_HINT_T0);
+            bsPriceVec(u.load(data.ul + i), t, s.load(data.strike + i), r.load(data.rate + i), v).store(data.px + i);
         }
     }
+
+    for (auto i = 0; i < SIZE_N; ++i)
+        assert(std::abs(data.theo[i] - data.px[i]) <= 1e-4);
 }
 BENCHMARK(pricer_avx_bsv);
 
@@ -497,10 +507,13 @@ static void pricer_avx_bsv_omp(benchmark::State &state)
         {
             size_t ii = omp_get_thread_num();
             Vec16f u, t, s, r, v;
-            for (auto i = N * ii; i < (ii + 1) * N; i += 16)
-                bsPriceVec(u.load(data.ul + i), t.load(data.tte + i), s.load(data.strike + i), r.load(data.rate + i),
-                           v.load(data.vol + i))
+            for (auto i = N * ii; i < (ii + 1) * N; i += 16) {
+                v.load(data.vol + i);
+                t.load(data.tte + i);
+                _mm_prefetch((void*)(data.px + i),_MM_HINT_T0);
+                bsPriceVec(u.load(data.ul + i), t, s.load(data.strike + i), r.load(data.rate + i), v)
                     .store(data.px + i);
+            }
         }
     }
 }
@@ -518,16 +531,22 @@ static void pricer_avx_bsv512(benchmark::State &state)
         data.strike[i].vcl = 110.0;
         data.rate[i].vcl = 0.05;
         data.vol[i].vcl = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-        data.px[i].vcl =
-            bsPriceVec(data.ul[i].vcl, data.tte[i].vcl, data.strike[i].vcl, data.rate[i].vcl, data.vol[i].vcl);
+        data.theo[i].vcl =
+            bsPrice(data.ul[i].array[0], data.tte[i].array[0], data.strike[i].array[0], data.rate[i].array[0], data.vol[i].array[0]);
     }
 
     for (auto _ : state)
     {
-        for (auto i = 0; i < SIZE_N / 16; i++)
-            data.px[i].vcl =
-                bsPriceVec(data.ul[i].vcl, data.tte[i].vcl, data.strike[i].vcl, data.rate[i].vcl, data.vol[i].vcl);
+        for (auto i = 0; i < SIZE_N / 16; i++) {
+            _mm_prefetch((void*)(data.px + i),_MM_HINT_T0);
+            data.px[i].vcl = bsPriceVec(data.ul[i].vcl, data.tte[i].vcl, data.strike[i].vcl, data.rate[i].vcl, data.vol[i].vcl);
+        }
     }
+
+    for (auto i = 0; i < SIZE_N/16; ++i)
+        for(int j = 0; j < 16; ++j) 
+            assert(std::abs(data.theo[i].array[j] - data.px[i].array[j]) <= 1e-4);
+
 }
 BENCHMARK(pricer_avx_bsv512);
 
@@ -553,9 +572,12 @@ static void pricer_avx_bsv512_omp(benchmark::State &state)
 #pragma omp parallel
         {
             size_t ii = omp_get_thread_num();
-            for (auto i = ii * N; i < (ii + 1) * N; i++)
+            
+            for (auto i = ii * N; i < (ii + 1) * N; i++) {
+                _mm_prefetch((void*)(data.px + i),_MM_HINT_T0);
                 data.px[i].vcl =
                     bsPriceVec(data.ul[i].vcl, data.tte[i].vcl, data.strike[i].vcl, data.rate[i].vcl, data.vol[i].vcl);
+            }
         }
     }
 }
