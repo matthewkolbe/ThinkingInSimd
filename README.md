@@ -145,4 +145,4 @@ A big takeaway is just look at how much AVXifying your code can help. Single thr
 
 [3] This will be calculating an option's value in the Black-Scholes formula.
 
-[4] I subtle bug that led to fewer IV iterations in an earlier version of this essay had made `bsv512` look like a clear winner, and that didn't feel good because it's not a good data structure.
+[4] A subtle bug that led to fewer IV iterations in an earlier version of this essay had made `bsv512` look like a clear winner, and that didn't feel good because it's not a good data structure.
