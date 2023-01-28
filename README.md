@@ -99,45 +99,43 @@ CPU Caches:
 - L2 Unified 1024 KiB (x16)
 - L3 Unified 32768 KiB (x2)
 
-Load Average: 0.81, 1.04, 0.90
-
-|Benchmark                    |          Time|              CPU|   Iterations|
-|:----------------------------|-------------:|----------------:|------------:|
-|iv_naive_bsv                 | 19,345,965 ns|    19,345,938 ns|           36|
-|iv_naive_bs                  | 19,284,717 ns|    19,284,882 ns|           36|
-|iv_avx_bsv                   |  1,695,266 ns|     1,695,281 ns|          411|
-|iv_avx_bsv_omp               |     89,908 ns|        89,909 ns|         7682|
-|iv_avx_bsv512                |  1,493,387 ns|     1,493,389 ns|          453|
-|iv_avx_bsv512_omp            |     78,079 ns|        78,079 ns|         8399|
-|iv_avx_bs                    |  1,750,544 ns|     1,750,552 ns|          389|
-|iv_avx_bs_omp                |     91,852 ns|        91,854 ns|         7531|
-|pricer_naive_bsv             |    216,102 ns|       216,105 ns|         3210|
-|pricer_naive_bs              |    239,462 ns|       239,464 ns|         2922|
-|pricer_avx_bsv               |     76,378 ns|        76,375 ns|         9113|
-|pricer_avx_bsv_omp           |      8,120 ns|         8,120 ns|        79219|
-|pricer_avx_bsv512            |     95,223 ns|        95,223 ns|         7174|
-|pricer_avx_bsv512_omp        |      7,982 ns|         7,982 ns|        74778|
-|pricer_avx_bs                |    152,942 ns|       152,943 ns|         4498|
-|pricer_avx_bs_omp            |     11,329 ns|        11,329 ns|        61423|
-|vol_edge_naive_bsv512        |      3,997 ns|         3,997 ns|       174072|
-|vol_edge_naive_bsv           |      3,613 ns|         3,613 ns|       193195|
-|vol_edge_naive_bs            |     20,501 ns|        20,501 ns|        34116|
-|vol_edge_avx_bsv             |      3,744 ns|         3,744 ns|       186476|
-|vol_edge_avx_unrolled_bsv    |      3,544 ns|         3,544 ns|       197404|
-|vol_edge_avx_bsv512          |      4,000 ns|         4,000 ns|       174787|
-|vol_edge_avx_unrolled_bsv512 |      3,655 ns|         3,655 ns|       191567|
-|vol_edge_avx_bs              |     41,404 ns|        41,404 ns|        16633|
-
+|Benchmark                    |         Time |            CPU |  Iterations|
+|:----------------------------|-------------:|---------------:|-----------:|
+|iv_naive_bsv                 |19,349,565 ns |  19,349,533 ns |          36|
+|iv_naive_bs                  |19,353,326 ns |  19,353,452 ns |          36|
+|iv_avx_bsv                   | 1,696,959 ns |   1,696,964 ns |         412|
+|iv_avx_bsv_omp               |    89,979 ns |      89,932 ns |        7873|
+|iv_avx_bsv512                | 1,702,175 ns |   1,702,184 ns |         397|
+|iv_avx_bsv512_omp            |    88,954 ns |      88,945 ns |        7030|
+|iv_avx_bs                    | 1,747,800 ns |   1,747,790 ns |         388|
+|iv_avx_bs_omp                |    91,845 ns |      91,841 ns |        7240|
+|pricer_naive_bsv             |   210,987 ns |     210,987 ns |        3289|
+|pricer_naive_bs              |   241,111 ns |     241,111 ns |        2914|
+|pricer_avx_bsv               |    92,044 ns |      92,044 ns |        7533|
+|pricer_avx_bsv_omp           |     7,922 ns |       7,922 ns |       87154|
+|pricer_avx_bsv512            |    93,361 ns |      93,360 ns |        7227|
+|pricer_avx_bsv512_omp        |     7,871 ns |       7,871 ns |       86703|
+|pricer_avx_bs                |   152,723 ns |     152,723 ns |        4506|
+|pricer_avx_bs_omp            |    11,926 ns |      11,926 ns |       62952|
+|vol_edge_naive_bsv512        |     4,142 ns |       4,142 ns |      166972|
+|vol_edge_naive_bsv           |     3,605 ns |       3,605 ns |      193709|
+|vol_edge_naive_bs            |    20,504 ns |      20,504 ns |       34160|
+|vol_edge_avx_bsv             |     3,626 ns |       3,626 ns |      192797|
+|vol_edge_avx_unrolled_bsv    |     3,532 ns |       3,532 ns |      198139|
+|vol_edge_avx_bsv512          |     4,150 ns |       4,150 ns |      168545|
+|vol_edge_avx_unrolled_bsv512 |     3,502 ns |       3,502 ns |      199738|
+|vol_edge_avx_bs              |    41,693 ns |      41,694 ns |       16790|
+|vol_edge_avx_unrolled_bs     |    38,716 ns |      38,716 ns |       18084|
 
 ## Analysis
 
-`bsv512` seems to be a winner. This is interesting from the perspective of any lesson the glean, because I think it just raises more questions like "what about storing data into it?" I think it's a little unfortunate as well, because `bsv512` isn't nearly as portable or intutive as `bsv`, but if your priority is doing these calculations as fast as possible, it's hard to ignore exactly how much faster `bsv512` is.
+`bsv` and `bsv512` seem to be nearly the same[4], with the exeption being that autovectorization works much better with `bsv`. Notice how much manutal effort it took to unroll/reorder `bsv512` for the Short (vol_edge_*) cases just to make it match the autovectorized version.
 
 One other thing of note is how across-the-board bad `bs` is. `scatter` and `gather` combined with cache thrashing is just too much overhead. Even when you use `bs` naively, the results are bad, because the compiler cannot autovectorize it easily.
 
 ## Comments
 
-A big takeaway is just look at how much AVXifying your code can help. Single threaded Naive-to-AVX offers a >10x speedup. That's hard to ignore, and if the concept is hard to ignore, then you should consider from the very beginning whether your data structures will hamper your ability to leverage it. It's easy to mistakenly think ahead of time that `bs` would be a good data structure for this purpose. It's simple, and what's more is that by putting all your instrument's data together, you'll get speed ups from the idea that using one piece of data implies a high probability that you will use another, so they'll both be there on the cache line already. That sounds logical to me, but then, when you're SIMD optimizing down the road, or the compiler is trying to SIMD optimize for you, you lose big time, and probably by that point, you've built so many other applications around the `bs` data structure that you cannot go back without incurring a huge expense. 
+A big takeaway is just look at how much AVXifying your code can help. Single threaded Naive-to-AVX offers a >10x speedup. That's hard to ignore, and if the concept is hard to ignore, then you should consider from the very beginning whether your data structures will hamper your ability to leverage it. It's easy to mistakenly think ahead of time that `bs` would be a good data structure for this purpose. It's simple, and what's more is that by putting all your instrument's data together, you'll get speed ups from the idea that using one piece of data implies a high probability that you will use another, so they'll both be there on the cache line already. That sounds logical to me, but then, when you're SIMD optimizing down the road, or the compiler is trying to SIMD optimize for you, you lose big time, and probably by that point, you've built so many other applications around the `bs` data structure that you cannot go back without incurring a huge expense.
 
 ### Footnotes
 
@@ -146,3 +144,5 @@ A big takeaway is just look at how much AVXifying your code can help. Single thr
 [2] This will be calculating the inverse of the Black-Scholes option price with respect to its volatility parameter, and [you can read about Black-Scholes here](http://www.iam.fmph.uniba.sk/institute/stehlikova/fd14en/lectures/06_black_scholes_2.pdf). Aside from the formula itself being non-trival, with calls to the ERF function, it's not analytically invertible, and it's best to use a bisection root finder to solve instead. 
 
 [3] This will be calculating an option's value in the Black-Scholes formula.
+
+[4] I subtle bug that led to fewer IV iterations in an earlier version of this essay had made `bsv512` look like a clear winner, and that didn't feel good because it's not a good data structure.
