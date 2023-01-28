@@ -20,29 +20,27 @@ const Vec16f VE5 = Vec16f(1.061405429);
 const Vec16f VNEGHALF = Vec16f(-0.5);
 const Vec16f ONE_OVER_ROOT2 = Vec16f(0.70710678118);
 
-inline __attribute__((always_inline)) Vec16f erf(const Vec16f x)
+inline __attribute__((always_inline)) Vec16f erf(const Vec16f& x)
 {
-    auto le_mask = (x <= VNEGATIVE_ZERO);
     auto xx = abs(x);
-
+    auto le_mask = (x <= VNEGATIVE_ZERO);
     auto t = VONE / (0.3275911 * xx + VONE);
 
     auto yy = polynomial_4(t, VE1, VE2, VE3, VE4, VE5);
     yy *= t;
-
     t = exp(-xx * xx);
     yy = VONE - yy * t;
 
     return ((!le_mask) & yy) + (le_mask & (-yy));
 }
 
-inline __attribute__((always_inline)) Vec16f cdfnorm(const Vec16f x)
+inline __attribute__((always_inline)) Vec16f cdfnorm(const Vec16f& x)
 {
     return 0.5 * (1.0 + erf(x * ONE_OVER_ROOT2));
 }
 
-inline __attribute__((always_inline)) Vec16f bsPriceVec(const Vec16f ul, const Vec16f tte, const Vec16f strike,
-                                                        const Vec16f rate, const Vec16f vol)
+inline __attribute__((always_inline)) Vec16f bsPriceVec(const Vec16f& ul, const Vec16f& tte, const Vec16f& strike,
+                                                        const Vec16f& rate, const Vec16f& vol)
 {
     auto vol_sqrt_t = vol * sqrt(tte);
 
@@ -51,8 +49,8 @@ inline __attribute__((always_inline)) Vec16f bsPriceVec(const Vec16f ul, const V
     return (cdfnorm(d1) * ul) - (cdfnorm(d2) * strike * exp(-rate * tte));
 }
 
-inline __attribute__((always_inline)) Vec16f bisectIVVec(const Vec16f ul, const Vec16f tte, const Vec16f strike,
-                                                         const Vec16f rate, const Vec16f price)
+inline __attribute__((always_inline)) Vec16f bisectIVVec(const Vec16f& ul, const Vec16f& tte, const Vec16f& strike,
+                                                         const Vec16f& rate, const Vec16f& price)
 {
     auto low_vol = Vec16f(0.01f);
     auto high_vol = Vec16f(2.0f);
