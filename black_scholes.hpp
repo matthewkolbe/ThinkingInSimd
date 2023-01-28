@@ -11,7 +11,8 @@ inline __attribute__((always_inline)) float nCDF(const float &x)
     return std::erfc(-x * ONE_OVER_SQRT_TWO) * 0.5;
 }
 
-inline __attribute__((always_inline)) float bsPrice(const float &ul, const float &tte, const float &strike, const float &rate, const float &vol)
+inline __attribute__((always_inline)) float bsPrice(const float &ul, const float &tte, const float &strike,
+                                                    const float &rate, const float &vol)
 {
     auto vol_sqrt_t = vol * std::sqrt(tte);
     auto d1 = (std::log(ul / strike) + (rate + vol * vol * 0.5) * tte) / vol_sqrt_t;
@@ -19,7 +20,8 @@ inline __attribute__((always_inline)) float bsPrice(const float &ul, const float
     return nCDF(d1) * ul - nCDF(d2) * strike * std::exp(-rate * tte);
 }
 
-inline __attribute__((always_inline)) float bisectIV(const float &ul, const float &tte, const float &strike, const float &rate, const float &price)
+inline __attribute__((always_inline)) float bisectIV(const float &ul, const float &tte, const float &strike,
+                                                     const float &rate, const float &price)
 {
     auto low_vol = 0.01f;
     auto high_vol = 2.0f;
