@@ -131,7 +131,7 @@ CPU Caches:
 
 `bsv` and `bsv512` seem to be nearly the same[^4], with the exeption being that autovectorization works much better with `bsv`. Notice how much manutal effort it took to unroll/reorder `bsv512` for the Short (vol_edge_*) cases just to make it match the autovectorized version.
 
-One other thing of note is how across-the-board bad `bs` is. `scatter` and `gather` combined with cache thrashing is just too much overhead. Even when you use `bs` naively, the results are bad, because the compiler cannot autovectorize it easily.
+One other thing of note is how across-the-board `bs` is the wrost, but if you are only doing Long calculations, then maybe other qualities of the data struture could make it the best to use. But when you're doing Short or Long calculations, `scatter` and `gather` combined with cache thrashing is just too much overhead. Even when you use `bs` naively, the results are bad, because the compiler cannot autovectorize it easily.
 
 ## Comments
 
@@ -145,4 +145,4 @@ A big takeaway is just look at how much AVXifying your code can help. Single thr
 
 [^3]: This will be calculating an option's value in the Black-Scholes formula.
 
-[^4]: A subtle bug that led to fewer IV iterations in an earlier version of this essay had made `bsv512` look like a clear winner, and that didn't feel good because it's not a good data structure.
+[^4]: A subtle bug that led to fewer IV iterations in an earlier version of this essay had made `bsv512` look like a clear winner, and that didn't feel good because it's not a good data structure. I'm thankful to have found that bug.
