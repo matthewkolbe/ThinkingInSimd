@@ -4,7 +4,7 @@
 
 The ubiquity and effectiveness of AVX intrinsics in the most popular programming languages has opened up a whole new paradigm for software optimization. Behind the scenes, compilers have embraced the AVX instruction sets, and will automatically apply them when appropriate ("autovectorization"). But autovectorization is generally only applied on shallow/obvious use cases. Don't just take it from me, here's Linus Torvalds:
 
->It's easy to wave your hands and say "just use vector units". You see people doing it here. In reality, not only has auto-vectorization not ever done so great in the first place, there aren't many places to do it at all. [^1]
+>It's easy to wave your hands and say "just use vector units". You see people doing it here. In reality, not only has auto-vectorization not ever done so great in the first place, there aren't many places to do it at all.[^1]
 
 But if you venture into the world of manually applying intrinsic functions, they can give you power far beyond what compilers can accomplish today.
 
@@ -139,10 +139,10 @@ A big takeaway is just look at how much AVXifying your code can help. Single thr
 
 ### Footnotes
 
-[^1] https://www.realworldtech.com/forum/?threadid=209249&curpostid=209596
+[^1]: https://www.realworldtech.com/forum/?threadid=209249&curpostid=209596
 
-[^2] This will be calculating the inverse of the Black-Scholes option price with respect to its volatility parameter, and [you can read about Black-Scholes here](http://www.iam.fmph.uniba.sk/institute/stehlikova/fd14en/lectures/06_black_scholes_2.pdf). Aside from the formula itself being non-trival, with calls to the ERF function, it's not analytically invertible, and it's best to use a bisection root finder to solve instead. 
+[^2]: This will be calculating the inverse of the Black-Scholes option price with respect to its volatility parameter, and [you can read about Black-Scholes here](http://www.iam.fmph.uniba.sk/institute/stehlikova/fd14en/lectures/06_black_scholes_2.pdf). Aside from the formula itself being non-trival, with calls to the ERF function, it's not analytically invertible, and it's best to use a bisection root finder to solve instead. 
 
-[^3] This will be calculating an option's value in the Black-Scholes formula.
+[^3]: This will be calculating an option's value in the Black-Scholes formula.
 
-[^4] A subtle bug that led to fewer IV iterations in an earlier version of this essay had made `bsv512` look like a clear winner, and that didn't feel good because it's not a good data structure.
+[^4]: A subtle bug that led to fewer IV iterations in an earlier version of this essay had made `bsv512` look like a clear winner, and that didn't feel good because it's not a good data structure.
