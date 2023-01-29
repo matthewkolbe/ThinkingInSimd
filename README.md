@@ -89,7 +89,7 @@ Although I will not be showing this here, `bsv512` has the additional complicati
 
 ## The test
 
-I would like to see how all data structures perform in all compute paradigms. Additionally, I would like to see how it performs single threaded versus using 32 threads via OpenMP (OMP). I chose a value of `N=51200` because it's appropriately large for practical uses, and it divides all my partitions evenly. Of note is that `51200*8*4=1.6MB` for the total data operated on, and my processor has 64KB of L1 cache and 1MB of L2 per core. If we want to start exceeding cache, the usefulness of each data structure is bound to change. I use [Google Benchmark](https://github.com/google/benchmark) as the microbenchmarking framework. Here are the results:
+I would like to see how all data structures perform in all compute paradigms. Additionally, I would like to see how it performs single threaded versus using 32 threads via OpenMP (OMP). I chose a value of `N=51200` because it's appropriately large for practical uses, and it divides all my partitions evenly. Of note is that `51200*8*4=1.6MB` for the total data operated on, and my processor has 64KB of L1 cache and 1MB of L2 per core. If we want to start exceeding cache, the usefulness of each data structure is bound to change. Long is prefixed with `iv_`, Medium is prefixed with `pricer_` and Short with `vol_edge`. I use [Google Benchmark](https://github.com/google/benchmark) as the microbenchmarking framework. Here are the results:
 
 Run on (32 X 5881 MHz CPU s)
 
@@ -131,7 +131,7 @@ CPU Caches:
 
 `bsv` and `bsv512` seem to be nearly the same[^4], with the exeption being that autovectorization works much better with `bsv`. Notice how much manutal effort it took to unroll/reorder `bsv512` for the Short (vol_edge_*) cases just to make it match the autovectorized version.
 
-One other thing of note is how across-the-board `bs` is the wrost, but if you are only doing Long calculations, then maybe other qualities of the data struture could make it the best to use. But when you're doing Short or Long calculations, `scatter` and `gather` combined with cache thrashing is just too much overhead. Even when you use `bs` naively, the results are bad, because the compiler cannot autovectorize it easily.
+One other thing of note is how across-the-board `bs` is the wrost, but if you are only doing Long calculations, then maybe other qualities of the data struture could make it the best to use. But when you're doing Short or Medium calculations, `scatter` and `gather` combined with cache thrashing is just too much overhead. Even when you use `bs` naively, the results are bad, because the compiler cannot autovectorize it easily.
 
 ## Comments
 
