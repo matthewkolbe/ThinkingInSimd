@@ -476,7 +476,6 @@ static void pricer_avx_bsv(benchmark::State &state)
         {
             v.load(data.vol + i);
             t.load(data.tte + i);
-            _mm_prefetch((void *)(data.px + i), _MM_HINT_T0);
             bsPriceVec(u.load(data.ul + i), t, s.load(data.strike + i), r.load(data.rate + i), v).store(data.px + i);
         }
     }
@@ -513,7 +512,6 @@ static void pricer_avx_bsv_omp(benchmark::State &state)
             {
                 v.load(data.vol + i);
                 t.load(data.tte + i);
-                _mm_prefetch((void *)(data.px + i), _MM_HINT_T0);
                 bsPriceVec(u.load(data.ul + i), t, s.load(data.strike + i), r.load(data.rate + i), v)
                     .store(data.px + i);
             }
@@ -541,11 +539,8 @@ static void pricer_avx_bsv512(benchmark::State &state)
     for (auto _ : state)
     {
         for (auto i = 0; i < SIZE_N / 16; i++)
-        {
-            _mm_prefetch((void *)(data.px + i), _MM_HINT_T0);
             data.px[i].vcl =
                 bsPriceVec(data.ul[i].vcl, data.tte[i].vcl, data.strike[i].vcl, data.rate[i].vcl, data.vol[i].vcl);
-        }
     }
 
     for (auto i = 0; i < SIZE_N / 16; ++i)
@@ -578,11 +573,8 @@ static void pricer_avx_bsv512_omp(benchmark::State &state)
             size_t ii = omp_get_thread_num();
 
             for (auto i = ii * N; i < (ii + 1) * N; i++)
-            {
-                _mm_prefetch((void *)(data.px + i), _MM_HINT_T0);
                 data.px[i].vcl =
                     bsPriceVec(data.ul[i].vcl, data.tte[i].vcl, data.strike[i].vcl, data.rate[i].vcl, data.vol[i].vcl);
-            }
         }
     }
 }
