@@ -1,7 +1,4 @@
 // Copyright 2023 Matthew Kolbe
-#include "black_scholes.hpp"
-#include "vcl/vectorclass.h"
-#include "vec_black_scholes.hpp"
 #include <benchmark/benchmark.h>
 #include <cassert>
 #include <chrono>
@@ -11,6 +8,10 @@
 #include <memory>
 #include <omp.h>
 #include <thread>
+
+#include "black_scholes.hpp"
+#include "vcl/vectorclass.h"
+#include "vec_black_scholes.hpp"
 
 // compile with: g++ main.cpp -std=c++20 -O3 -lm -lstdc++ -march=native -fopenmp -ffast-math  -lbenchmark -lpthread
 // format with: clang-format main.cpp -i -style=Microsoft
@@ -46,36 +47,24 @@ struct alignas(4096) bsv
   public:
     bsv()
     {
-        ul = new float[SIZE_N];
-        tte = new float[SIZE_N];
-        strike = new float[SIZE_N];
-        rate = new float[SIZE_N];
-        vol = new float[SIZE_N];
-        iv = new float[SIZE_N];
-        px = new float[SIZE_N];
-        theo = new float[SIZE_N];
+        ul = std::make_unique<float[]>(SIZE_N);
+        tte = std::make_unique<float[]>(SIZE_N);
+        strike = std::make_unique<float[]>(SIZE_N);
+        rate = std::make_unique<float[]>(SIZE_N);
+        vol = std::make_unique<float[]>(SIZE_N);
+        iv = std::make_unique<float[]>(SIZE_N);
+        px = std::make_unique<float[]>(SIZE_N);
+        theo = std::make_unique<float[]>(SIZE_N);
     }
 
-    ~bsv()
-    {
-        delete[] ul;
-        delete[] tte;
-        delete[] strike;
-        delete[] rate;
-        delete[] vol;
-        delete[] iv;
-        delete[] px;
-        delete[] theo;
-    }
-
-    float *__restrict__ ul;
-    float *__restrict__ tte;
-    float *__restrict__ strike;
-    float *__restrict__ rate;
-    float *__restrict__ iv;
-    float *__restrict__ vol;
-    float *__restrict__ px;
-    float *__restrict__ theo;
+    std::unique_ptr<float[]> ul;
+    std::unique_ptr<float[]> tte;
+    std::unique_ptr<float[]> strike;
+    std::unique_ptr<float[]> rate;
+    std::unique_ptr<float[]> iv;
+    std::unique_ptr<float[]> vol;
+    std::unique_ptr<float[]> px;
+    std::unique_ptr<float[]> theo;
 };
 
 struct alignas(4096) bsv512
@@ -83,36 +72,24 @@ struct alignas(4096) bsv512
   public:
     bsv512()
     {
-        ul = new V16[SIZE_N / 16];
-        tte = new V16[SIZE_N / 16];
-        strike = new V16[SIZE_N / 16];
-        rate = new V16[SIZE_N / 16];
-        vol = new V16[SIZE_N / 16];
-        iv = new V16[SIZE_N / 16];
-        px = new V16[SIZE_N / 16];
-        theo = new V16[SIZE_N / 16];
+        ul = std::make_unique<V16[]>(SIZE_N);
+        tte = std::make_unique<V16[]>(SIZE_N);
+        strike = std::make_unique<V16[]>(SIZE_N);
+        rate = std::make_unique<V16[]>(SIZE_N);
+        vol = std::make_unique<V16[]>(SIZE_N);
+        iv = std::make_unique<V16[]>(SIZE_N);
+        px = std::make_unique<V16[]>(SIZE_N);
+        theo = std::make_unique<V16[]>(SIZE_N);
     }
 
-    ~bsv512()
-    {
-        delete[] ul;
-        delete[] tte;
-        delete[] strike;
-        delete[] rate;
-        delete[] vol;
-        delete[] iv;
-        delete[] px;
-        delete[] theo;
-    }
-
-    V16 *__restrict__ ul;
-    V16 *__restrict__ tte;
-    V16 *__restrict__ strike;
-    V16 *__restrict__ rate;
-    V16 *__restrict__ iv;
-    V16 *__restrict__ vol;
-    V16 *__restrict__ px;
-    V16 *__restrict__ theo;
+    std::unique_ptr<V16[]> ul;
+    std::unique_ptr<V16[]> tte;
+    std::unique_ptr<V16[]> strike;
+    std::unique_ptr<V16[]> rate;
+    std::unique_ptr<V16[]> iv;
+    std::unique_ptr<V16[]> vol;
+    std::unique_ptr<V16[]> px;
+    std::unique_ptr<V16[]> theo;
 };
 
 static void iv_naive_bsv(benchmark::State &state)
@@ -148,7 +125,7 @@ BENCHMARK(iv_naive_bsv);
 static void iv_naive_bs(benchmark::State &state)
 {
     std::srand(1);
-    alignas(4096) bs *__restrict__ data = new bs[SIZE_N];
+    alignas(4096) auto data = std::make_unique<bs[]>(SIZE_N);
 
     for (auto i = 0; i < SIZE_N; ++i)
     {
@@ -172,8 +149,6 @@ static void iv_naive_bs(benchmark::State &state)
     {
         assert(std::abs(data[i].iv - data[i].vol) <= 1e-4);
     }
-
-    delete[] data;
 }
 BENCHMARK(iv_naive_bs);
 
@@ -198,12 +173,12 @@ static void iv_avx_bsv(benchmark::State &state)
         Vec16f u, t, s, r, p;
         for (auto i = 0; i < SIZE_N; i += 16)
         {
-            u.load(data.ul + i);
-            t.load(data.tte + i);
-            s.load(data.strike + i);
-            r.load(data.rate + i);
-            p.load(data.px + i);
-            bisectIVVec(u, t, s, r, p).store(data.iv + i);
+            u.load(data.ul.get() + i);
+            t.load(data.tte.get() + i);
+            s.load(data.strike.get() + i);
+            r.load(data.rate.get() + i);
+            p.load(data.px.get() + i);
+            bisectIVVec(u, t, s, r, p).store(data.iv.get() + i);
         }
     }
 
@@ -240,9 +215,10 @@ static void iv_avx_bsv_omp(benchmark::State &state)
             Vec16f u, t, s, r, p;
             for (auto i = N * ii; i < (ii + 1) * N; i += 16)
             {
-                t.load(data.tte + i);
-                bisectIVVec(u.load(data.ul + i), t, s.load(data.strike + i), r.load(data.rate + i), p.load(data.px + i))
-                    .store(data.iv + i);
+                t.load(data.tte.get() + i);
+                bisectIVVec(u.load(data.ul.get() + i), t, s.load(data.strike.get() + i), r.load(data.rate.get() + i),
+                            p.load(data.px.get() + i))
+                    .store(data.iv.get() + i);
             }
         }
     }
@@ -329,7 +305,7 @@ BENCHMARK(iv_avx_bsv512_omp);
 static void iv_avx_bs(benchmark::State &state)
 {
     std::srand(1);
-    alignas(4096) bs *__restrict__ data = new bs[SIZE_N];
+    alignas(4096) auto data = std::make_unique<bs[]>(SIZE_N);
 
     for (auto i = 0; i < SIZE_N; ++i)
     {
@@ -347,26 +323,24 @@ static void iv_avx_bs(benchmark::State &state)
     {
         for (auto i = 0; i < SIZE_N; i += 16)
         {
-            auto ul = gather16f<BS_UL>(data + i);
-            auto tte = gather16f<BS_TTE>(data + i);
-            auto str = gather16f<BS_STRIKE>(data + i);
-            auto rate = gather16f<BS_RATE>(data + i);
-            auto px = gather16f<BS_PX>(data + i);
-            scatter<BS_IV>(bisectIVVec(ul, tte, str, rate, px), (float *)(data + i));
+            auto ul = gather16f<BS_UL>(data.get() + i);
+            auto tte = gather16f<BS_TTE>(data.get() + i);
+            auto str = gather16f<BS_STRIKE>(data.get() + i);
+            auto rate = gather16f<BS_RATE>(data.get() + i);
+            auto px = gather16f<BS_PX>(data.get() + i);
+            scatter<BS_IV>(bisectIVVec(ul, tte, str, rate, px), (float *)(data.get() + i));
         }
     }
 
     for (auto i = 0; i < SIZE_N; ++i)
         assert(std::abs(data[i].iv - data[i].vol) <= 1e-4);
-
-    delete[] data;
 }
 BENCHMARK(iv_avx_bs);
 
 static void iv_avx_bs_omp(benchmark::State &state)
 {
     std::srand(1);
-    alignas(4096) bs *__restrict__ data = new bs[SIZE_N];
+    alignas(4096) auto data = std::make_unique<bs[]>(SIZE_N);
 
     omp_set_num_threads(THRD);
 
@@ -389,20 +363,18 @@ static void iv_avx_bs_omp(benchmark::State &state)
             size_t ii = omp_get_thread_num();
             for (auto i = ii * N; i < (ii + 1) * N; i += 16)
             {
-                auto ul = gather16f<BS_UL>(data + i);
-                auto tte = gather16f<BS_TTE>(data + i);
-                auto str = gather16f<BS_STRIKE>(data + i);
-                auto rate = gather16f<BS_RATE>(data + i);
-                auto px = gather16f<BS_PX>(data + i);
-                scatter<BS_IV>(bisectIVVec(ul, tte, str, rate, px), (float *)(data + i));
+                auto ul = gather16f<BS_UL>(data.get() + i);
+                auto tte = gather16f<BS_TTE>(data.get() + i);
+                auto str = gather16f<BS_STRIKE>(data.get() + i);
+                auto rate = gather16f<BS_RATE>(data.get() + i);
+                auto px = gather16f<BS_PX>(data.get() + i);
+                scatter<BS_IV>(bisectIVVec(ul, tte, str, rate, px), (float *)(data.get() + i));
             }
         }
     }
 
     for (auto i = 0; i < SIZE_N; ++i)
         assert(std::abs(data[i].iv - data[i].vol) <= 1e-4);
-
-    delete[] data;
 }
 BENCHMARK(iv_avx_bs_omp);
 
@@ -432,7 +404,7 @@ BENCHMARK(pricer_naive_bsv);
 static void pricer_naive_bs(benchmark::State &state)
 {
     std::srand(1);
-    alignas(4096) bs *__restrict__ data = new bs[SIZE_N];
+    alignas(4096) auto data = std::make_unique<bs[]>(SIZE_N);
 
     for (auto i = 0; i < SIZE_N; ++i)
     {
@@ -449,8 +421,6 @@ static void pricer_naive_bs(benchmark::State &state)
         for (auto i = 0; i < SIZE_N; ++i)
             data[i].px = bsPrice(data[i].ul, data[i].tte, data[i].strike, data[i].rate, data[i].vol);
     }
-
-    delete[] data;
 }
 BENCHMARK(pricer_naive_bs);
 
@@ -474,9 +444,10 @@ static void pricer_avx_bsv(benchmark::State &state)
         Vec16f u, t, s, r, v;
         for (auto i = 0; i < SIZE_N; i += 16)
         {
-            v.load(data.vol + i);
-            t.load(data.tte + i);
-            bsPriceVec(u.load(data.ul + i), t, s.load(data.strike + i), r.load(data.rate + i), v).store(data.px + i);
+            v.load(data.vol.get() + i);
+            t.load(data.tte.get() + i);
+            bsPriceVec(u.load(data.ul.get() + i), t, s.load(data.strike.get() + i), r.load(data.rate.get() + i), v)
+                .store(data.px.get() + i);
         }
     }
 
@@ -510,10 +481,10 @@ static void pricer_avx_bsv_omp(benchmark::State &state)
             Vec16f u, t, s, r, v;
             for (auto i = N * ii; i < (ii + 1) * N; i += 16)
             {
-                v.load(data.vol + i);
-                t.load(data.tte + i);
-                bsPriceVec(u.load(data.ul + i), t, s.load(data.strike + i), r.load(data.rate + i), v)
-                    .store(data.px + i);
+                v.load(data.vol.get() + i);
+                t.load(data.tte.get() + i);
+                bsPriceVec(u.load(data.ul.get() + i), t, s.load(data.strike.get() + i), r.load(data.rate.get() + i), v)
+                    .store(data.px.get() + i);
             }
         }
     }
@@ -583,7 +554,7 @@ BENCHMARK(pricer_avx_bsv512_omp);
 static void pricer_avx_bs(benchmark::State &state)
 {
     std::srand(1);
-    alignas(4096) bs *__restrict__ data = new bs[SIZE_N];
+    alignas(4096) auto data = std::make_unique<bs[]>(SIZE_N);
 
     for (auto i = 0; i < SIZE_N; ++i)
     {
@@ -598,23 +569,21 @@ static void pricer_avx_bs(benchmark::State &state)
     {
         for (auto i = 0; i < SIZE_N; i += 16)
         {
-            auto ul = gather16f<BS_UL>(data + i);
-            auto tte = gather16f<BS_TTE>(data + i);
-            auto str = gather16f<BS_STRIKE>(data + i);
-            auto rate = gather16f<BS_RATE>(data + i);
-            auto vol = gather16f<BS_VOL>(data + i);
-            scatter<BS_THEO>(bsPriceVec(ul, tte, str, rate, vol), (float *)(data + i));
+            auto ul = gather16f<BS_UL>(data.get() + i);
+            auto tte = gather16f<BS_TTE>(data.get() + i);
+            auto str = gather16f<BS_STRIKE>(data.get() + i);
+            auto rate = gather16f<BS_RATE>(data.get() + i);
+            auto vol = gather16f<BS_VOL>(data.get() + i);
+            scatter<BS_THEO>(bsPriceVec(ul, tte, str, rate, vol), (float *)(data.get() + i));
         }
     }
-
-    delete[] data;
 }
 BENCHMARK(pricer_avx_bs);
 
 static void pricer_avx_bs_omp(benchmark::State &state)
 {
     std::srand(1);
-    alignas(4096) bs *__restrict__ data = new bs[SIZE_N];
+    alignas(4096) auto data = std::make_unique<bs[]>(SIZE_N);
 
     omp_set_num_threads(THRD);
 
@@ -636,17 +605,15 @@ static void pricer_avx_bs_omp(benchmark::State &state)
             size_t ii = omp_get_thread_num();
             for (auto i = ii * N; i < (ii + 1) * N; i += 16)
             {
-                auto ul = gather16f<BS_UL>(data + i);
-                auto tte = gather16f<BS_TTE>(data + i);
-                auto str = gather16f<BS_STRIKE>(data + i);
-                auto rate = gather16f<BS_RATE>(data + i);
-                auto vol = gather16f<BS_VOL>(data + i);
-                scatter<BS_THEO>(bsPriceVec(ul, tte, str, rate, vol), (float *)(data + i));
+                auto ul = gather16f<BS_UL>(data.get() + i);
+                auto tte = gather16f<BS_TTE>(data.get() + i);
+                auto str = gather16f<BS_STRIKE>(data.get() + i);
+                auto rate = gather16f<BS_RATE>(data.get() + i);
+                auto vol = gather16f<BS_VOL>(data.get() + i);
+                scatter<BS_THEO>(bsPriceVec(ul, tte, str, rate, vol), (float *)(data.get() + i));
             }
         }
     }
-
-    delete[] data;
 }
 BENCHMARK(pricer_avx_bs_omp);
 
@@ -661,9 +628,9 @@ static void vol_edge_naive_bsv512(benchmark::State &state)
         data.vol[i].vcl = 0.2 + 0.4 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
     }
 
-    auto theo = (float *__restrict__)data.theo;
-    auto iv = (float *__restrict__)data.iv;
-    auto vol = (float *__restrict__)data.vol;
+    auto theo = (float *__restrict__)data.theo.get();
+    auto iv = (float *__restrict__)data.iv.get();
+    auto vol = (float *__restrict__)data.vol.get();
 
     for (auto _ : state)
     {
@@ -710,8 +677,6 @@ static void vol_edge_naive_bs(benchmark::State &state)
         for (auto i = 0; i < SIZE_N; ++i)
             data[i].theo = std::abs(data[i].iv - data[i].vol);
     }
-
-    delete[] data;
 }
 BENCHMARK(vol_edge_naive_bs);
 
@@ -730,7 +695,7 @@ static void vol_edge_avx_bsv(benchmark::State &state)
     {
         Vec16f v, vi;
         for (auto i = 0; i < SIZE_N; i += 16)
-            abs(v.load(data.vol + i) - vi.load(data.iv + i)).store(data.theo + i);
+            abs(v.load(data.vol.get() + i) - vi.load(data.iv.get() + i)).store(data.theo.get() + i);
     }
 }
 BENCHMARK(vol_edge_avx_bsv);
@@ -759,22 +724,22 @@ static void vol_edge_avx_unrolled_bsv(benchmark::State &state)
         Vec16f v7, iv7;
         for (auto i = 0; i < SIZE_N; i += 128)
         {
-            v0.load(data.vol + i);
-            v1.load(data.vol + i + 16);
-            v2.load(data.vol + i + 32);
-            v3.load(data.vol + i + 48);
-            v4.load(data.vol + i + 64);
-            v5.load(data.vol + i + 80);
-            v6.load(data.vol + i + 96);
-            v7.load(data.vol + i + 112);
-            iv0.load(data.iv + i);
-            iv1.load(data.iv + i + 16);
-            iv2.load(data.iv + i + 32);
-            iv3.load(data.iv + i + 48);
-            iv4.load(data.iv + i + 64);
-            iv5.load(data.iv + i + 80);
-            iv6.load(data.iv + i + 96);
-            iv7.load(data.iv + i + 112);
+            v0.load(data.vol.get() + i);
+            v1.load(data.vol.get() + i + 16);
+            v2.load(data.vol.get() + i + 32);
+            v3.load(data.vol.get() + i + 48);
+            v4.load(data.vol.get() + i + 64);
+            v5.load(data.vol.get() + i + 80);
+            v6.load(data.vol.get() + i + 96);
+            v7.load(data.vol.get() + i + 112);
+            iv0.load(data.iv.get() + i);
+            iv1.load(data.iv.get() + i + 16);
+            iv2.load(data.iv.get() + i + 32);
+            iv3.load(data.iv.get() + i + 48);
+            iv4.load(data.iv.get() + i + 64);
+            iv5.load(data.iv.get() + i + 80);
+            iv6.load(data.iv.get() + i + 96);
+            iv7.load(data.iv.get() + i + 112);
             v0 -= iv0;
             v1 -= iv1;
             v2 -= iv2;
@@ -791,14 +756,14 @@ static void vol_edge_avx_unrolled_bsv(benchmark::State &state)
             iv5 = abs(v5);
             iv6 = abs(v6);
             iv7 = abs(v7);
-            iv0.store(data.theo + i);
-            iv1.store(data.theo + i + 16);
-            iv2.store(data.theo + i + 32);
-            iv3.store(data.theo + i + 48);
-            iv4.store(data.theo + i + 64);
-            iv5.store(data.theo + i + 80);
-            iv6.store(data.theo + i + 96);
-            iv7.store(data.theo + i + 112);
+            iv0.store(data.theo.get() + i);
+            iv1.store(data.theo.get() + i + 16);
+            iv2.store(data.theo.get() + i + 32);
+            iv3.store(data.theo.get() + i + 48);
+            iv4.store(data.theo.get() + i + 64);
+            iv5.store(data.theo.get() + i + 80);
+            iv6.store(data.theo.get() + i + 96);
+            iv7.store(data.theo.get() + i + 112);
         }
     }
 }
@@ -898,7 +863,7 @@ BENCHMARK(vol_edge_avx_unrolled_bsv512);
 static void vol_edge_avx_bs(benchmark::State &state)
 {
     std::srand(1);
-    alignas(2048) bs *__restrict__ data = new bs[SIZE_N];
+    alignas(2048) auto data = std::make_unique<bs[]>(SIZE_N);
 
     for (auto i = 0; i < SIZE_N; ++i)
     {
@@ -910,20 +875,18 @@ static void vol_edge_avx_bs(benchmark::State &state)
     {
         for (auto i = 0; i < SIZE_N; i += 16)
         {
-            auto vol = gather16f<BS_VOL>(data + i);
-            auto iv = gather16f<BS_IV>(data + i);
-            scatter<BS_THEO>(abs(iv - vol), (float *)(data + i));
+            auto vol = gather16f<BS_VOL>(data.get() + i);
+            auto iv = gather16f<BS_IV>(data.get() + i);
+            scatter<BS_THEO>(abs(iv - vol), (float *)(data.get() + i));
         }
     }
-
-    delete[] data;
 }
 BENCHMARK(vol_edge_avx_bs);
 
 static void vol_edge_avx_unrolled_bs(benchmark::State &state)
 {
     std::srand(1);
-    alignas(2048) bs *__restrict__ data = new bs[SIZE_N];
+    alignas(2048) auto data = std::make_unique<bs[]>(SIZE_N);
 
     for (auto i = 0; i < SIZE_N; ++i)
     {
@@ -939,23 +902,79 @@ static void vol_edge_avx_unrolled_bs(benchmark::State &state)
         Vec16f v3, vi3;
         for (auto i = 0; i < SIZE_N; i += 64)
         {
-            v0 = gather16f<BS_VOL>(data + i);
-            vi0 = gather16f<BS_IV>(data + i);
-            v1 = gather16f<BS_VOL>(data + i + 16);
-            vi1 = gather16f<BS_IV>(data + i + 16);
-            v2 = gather16f<BS_VOL>(data + i + 32);
-            vi2 = gather16f<BS_IV>(data + i + 32);
-            v3 = gather16f<BS_VOL>(data + i + 48);
-            vi3 = gather16f<BS_IV>(data + i + 48);
-            scatter<BS_THEO>(abs(vi0 - v0), (float *)(data + i));
-            scatter<BS_THEO>(abs(vi1 - v1), (float *)(data + i + 16));
-            scatter<BS_THEO>(abs(vi2 - v2), (float *)(data + i + 32));
-            scatter<BS_THEO>(abs(vi3 - v3), (float *)(data + i + 48));
+            v0 = gather16f<BS_VOL>(data.get() + i);
+            vi0 = gather16f<BS_IV>(data.get() + i);
+            v1 = gather16f<BS_VOL>(data.get() + i + 16);
+            vi1 = gather16f<BS_IV>(data.get() + i + 16);
+            v2 = gather16f<BS_VOL>(data.get() + i + 32);
+            vi2 = gather16f<BS_IV>(data.get() + i + 32);
+            v3 = gather16f<BS_VOL>(data.get() + i + 48);
+            vi3 = gather16f<BS_IV>(data.get() + i + 48);
+            scatter<BS_THEO>(abs(vi0 - v0), (float *)(data.get() + i));
+            scatter<BS_THEO>(abs(vi1 - v1), (float *)(data.get() + i + 16));
+            scatter<BS_THEO>(abs(vi2 - v2), (float *)(data.get() + i + 32));
+            scatter<BS_THEO>(abs(vi3 - v3), (float *)(data.get() + i + 48));
+        }
+    }
+}
+BENCHMARK(vol_edge_avx_unrolled_bs);
+
+static void random_writes_bs(benchmark::State &state)
+{
+    std::srand(1);
+    alignas(2048) auto data = std::make_unique<bs[]>(SIZE_N);
+    alignas(64) auto ind = std::make_unique<size_t[]>(SIZE_N);
+
+    for (auto i = 0; i < SIZE_N; ++i)
+        ind[i] = SIZE_N * rand() / RAND_MAX;
+
+    for (auto _ : state)
+    {
+        for (auto i = 0; i < SIZE_N;)
+        {
+            data[ind[i]].vol = 0.5;
+            data[ind[i++]].px = 1.0;
+            data[ind[i]].vol = 0.5;
+            data[ind[i++]].px = 1.0;
+            data[ind[i]].vol = 0.5;
+            data[ind[i++]].px = 1.0;
+            data[ind[i]].vol = 0.5;
+            data[ind[i++]].px = 1.0;
         }
     }
 
-    delete[] data;
+    benchmark::DoNotOptimize(data);
 }
-BENCHMARK(vol_edge_avx_unrolled_bs);
+BENCHMARK(random_writes_bs);
+
+static void random_writes_bsv(benchmark::State &state)
+{
+    std::srand(1);
+    bsv data;
+    alignas(64) auto ind = std::make_unique<size_t[]>(SIZE_N);
+
+    for (auto i = 0; i < SIZE_N; ++i)
+        ind[i] = SIZE_N * rand() / RAND_MAX;
+
+    for (auto _ : state)
+    {
+        float *__restrict__ px = data.px.get();
+        float *__restrict__ vol = data.vol.get();
+        for (auto i = 0; i < SIZE_N;)
+        {
+            vol[ind[i]] = 0.5;
+            px[ind[i++]] = 1.0;
+            vol[ind[i]] = 0.5;
+            px[ind[i++]] = 1.0;
+            vol[ind[i]] = 0.5;
+            px[ind[i++]] = 1.0;
+            vol[ind[i]] = 0.5;
+            px[ind[i++]] = 1.0;
+        }
+    }
+
+    benchmark::DoNotOptimize(data);
+}
+BENCHMARK(random_writes_bsv);
 
 BENCHMARK_MAIN();
