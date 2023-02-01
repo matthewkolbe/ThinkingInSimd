@@ -50,14 +50,14 @@ The next would be to keep each data type in a contigious array inside a data str
 ```
 struct alignas(4096) bsv {
     public:
-    float* __restrict__  ul;
-    float* __restrict__ tte;
-    float* __restrict__ strike;
-    float* __restrict__ rate;
-    float* __restrict__ iv;
-    float* __restrict__ vol;
-    float* __restrict__ px;
-    float* __restrict__ theo;
+    std::unique_ptr<float[]> ul;
+    std::unique_ptr<float[]> tte;
+    std::unique_ptr<float[]> strike;
+    std::unique_ptr<float[]> rate;
+    std::unique_ptr<float[]> iv;
+    std::unique_ptr<float[]> vol;
+    std::unique_ptr<float[]> px;
+    std::unique_ptr<float[]> theo;
 };
 ```
 
@@ -66,14 +66,24 @@ Neither of these leverages any intrinsic data structure. So in the third, we wil
 ```
 struct alignas(4096) bsv512
 {
-    Vec16f *__restrict__ ul;
-    Vec16f *__restrict__ tte;
-    Vec16f *__restrict__ strike;
-    Vec16f *__restrict__ rate;
-    Vec16f *__restrict__ iv;
-    Vec16f *__restrict__ vol;
-    Vec16f *__restrict__ px;
-    Vec16f *__restrict__ theo;
+    std::unique_ptr<V16[]> ul;
+    std::unique_ptr<V16[]> tte;
+    std::unique_ptr<V16[]> strike;
+    std::unique_ptr<V16[]> rate;
+    std::unique_ptr<V16[]> iv;
+    std::unique_ptr<V16[]> vol;
+    std::unique_ptr<V16[]> px;
+    std::unique_ptr<V16[]> theo;
+};
+```
+
+where
+
+```
+union alignas(64) V16 {
+    Vec16f vcl;
+    float array[16];
+    __m512 intr;
 };
 ```
 
@@ -99,33 +109,33 @@ CPU Caches:
 - L2 Unified 1024 KiB (x16)
 - L3 Unified 32768 KiB (x2)
 
-|Benchmark                    |         Time |            CPU |  Iterations|
-|:----------------------------|-------------:|---------------:|-----------:|
-|iv_naive_bsv                 |   19331.84 us|     19332.05 us|          36|
-|iv_naive_bs                  |   19242.75 us|     19242.84 us|          36|
-|iv_avx_bsv                   |    1578.45 us|      1578.44 us|         443|
-|iv_avx_bsv_omp               |      86.51 us|        86.51 us|        8128|
-|iv_avx_bsv512                |    1581.11 us|      1581.12 us|         427|
-|iv_avx_bsv512_omp            |      84.66 us|        84.64 us|        8201|
-|iv_avx_bs                    |    1630.22 us|      1630.22 us|         413|
-|iv_avx_bs_omp                |      88.39 us|        88.39 us|        7870|
-|pricer_naive_bsv             |     210.47 us|       210.47 us|        3289|
-|pricer_naive_bs              |     240.20 us|       240.20 us|        2910|
-|pricer_avx_bsv               |      91.78 us|        91.78 us|        7566|
-|pricer_avx_bsv_omp           |       7.87 us|         7.87 us|       86628|
-|pricer_avx_bsv512            |      93.23 us|        93.23 us|        7230|
-|pricer_avx_bsv512_omp        |       7.91 us|         7.91 us|       87007|
-|pricer_avx_bs                |     151.85 us|       151.85 us|        4516|
-|pricer_avx_bs_omp            |      10.98 us|        10.98 us|       64396|
-|vol_edge_naive_bsv512        |       4.06 us|         4.06 us|      169738|
-|vol_edge_naive_bsv           |       3.54 us|         3.54 us|      197154|
-|vol_edge_naive_bs            |      20.36 us|        20.36 us|       34433|
-|vol_edge_avx_bsv             |       3.67 us|         3.67 us|      190172|
-|vol_edge_avx_unrolled_bsv    |       3.51 us|         3.51 us|      198970|
-|vol_edge_avx_bsv512          |       4.08 us|         4.08 us|      171374|
-|vol_edge_avx_unrolled_bsv512 |       3.61 us|         3.61 us|      193342|
-|vol_edge_avx_bs              |      41.64 us|        41.64 us|       16774|
-|vol_edge_avx_unrolled_bs     |      38.58 us|        38.58 us|       18138|
+|Benchmark                    |         Time |
+|:----------------------------|-------------:|
+|iv_naive_bsv                 |   19331.84 us|
+|iv_naive_bs                  |   19242.75 us|
+|iv_avx_bsv                   |    1578.45 us|
+|iv_avx_bsv_omp               |      86.51 us|
+|iv_avx_bsv512                |    1581.11 us|
+|iv_avx_bsv512_omp            |      84.66 us|
+|iv_avx_bs                    |    1630.22 us|
+|iv_avx_bs_omp                |      88.39 us|
+|pricer_naive_bsv             |     210.47 us|
+|pricer_naive_bs              |     240.20 us|
+|pricer_avx_bsv               |      91.78 us|
+|pricer_avx_bsv_omp           |       7.87 us|
+|pricer_avx_bsv512            |      93.23 us|
+|pricer_avx_bsv512_omp        |       7.91 us|
+|pricer_avx_bs                |     151.85 us|
+|pricer_avx_bs_omp            |      10.98 us|
+|vol_edge_naive_bsv512        |       4.06 us|
+|vol_edge_naive_bsv           |       3.54 us|
+|vol_edge_naive_bs            |      20.36 us|
+|vol_edge_avx_bsv             |       3.67 us|
+|vol_edge_avx_unrolled_bsv    |       3.51 us|
+|vol_edge_avx_bsv512          |       4.08 us|
+|vol_edge_avx_unrolled_bsv512 |       3.61 us|
+|vol_edge_avx_bs              |      41.64 us|
+|vol_edge_avx_unrolled_bs     |      38.58 us|
 
 ## Analysis
 
