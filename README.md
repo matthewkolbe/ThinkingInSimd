@@ -111,24 +111,24 @@ CPU Caches:
 
 |Benchmark                    |   Time (GCC) |  Time (Clang)|
 |:----------------------------|-------------:|-------------:|
-|iv_naive_bsv                 |   17222.87 us|   18156.57 us|
+|iv_naive_bsv                 |   17222.87 us :heavy_check_mark:|   18156.57 us|
 |iv_naive_bs                  |   17239.20 us|   18116.14 us|
-|iv_avx_bsv                   |    1578.78 us|    1331.91 us|
-|iv_avx_bsv_omp               |      87.00 us|      69.54 us|
+|iv_avx_bsv                   |    1578.78 us|    1331.91 us :heavy_check_mark:|
+|iv_avx_bsv_omp               |      87.00 us|      69.54 us :heavy_check_mark:|
 |iv_avx_bsv512                |    1575.17 us|    1350.81 us|
-|iv_avx_bsv512_omp            |      84.88 us|      70.10 us|
+|iv_avx_bsv512_omp            |      84.88 us|      70.10 us :heavy_check_mark:|
 |iv_avx_bs                    |    1647.47 us|    1428.12 us|
 |iv_avx_bs_omp                |      89.64 us|      75.40 us|
-|pricer_naive_bsv             |     143.17 us|     853.25 us|
+|pricer_naive_bsv             |     143.17 us :heavy_check_mark:|     853.25 us|
 |pricer_naive_bs              |     164.57 us|     808.51 us|
 |pricer_avx_bsv               |      94.68 us|      88.51 us|
-|pricer_avx_bsv_omp           |       8.40 us|       6.69 us|
-|pricer_avx_bsv512            |      99.26 us|      87.82 us|
-|pricer_avx_bsv512_omp        |       8.13 us|       6.71 us|
+|pricer_avx_bsv_omp           |       8.40 us|       6.69 us :heavy_check_mark:|
+|pricer_avx_bsv512            |      99.26 us|      87.82 us :heavy_check_mark:|
+|pricer_avx_bsv512_omp        |       8.13 us|       6.71 us :heavy_check_mark:|
 |pricer_avx_bs                |     152.03 us|     161.31 us|
 |pricer_avx_bs_omp            |      10.98 us|      10.26 us|
 |vol_edge_naive_bsv512        |       8.85 us|       5.70 us|
-|vol_edge_naive_bsv           |       3.60 us|       3.64 us|
+|vol_edge_naive_bsv           |       3.60 us :heavy_check_mark:|       3.64 us :heavy_check_mark:|
 |vol_edge_naive_bs            |      20.24 us|      19.47 us|
 |vol_edge_avx_bsv             |       3.57 us|       5.00 us|
 |vol_edge_avx_unrolled_bsv    |       3.55 us|       3.67 us|
