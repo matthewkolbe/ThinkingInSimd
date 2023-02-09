@@ -109,33 +109,33 @@ CPU Caches:
 - L2 Unified 1024 KiB (x16)
 - L3 Unified 32768 KiB (x2)
 
-|Benchmark                    |         Time |
-|:----------------------------|-------------:|
-|iv_naive_bsv                 |   19331.84 us|
-|iv_naive_bs                  |   19242.75 us|
-|iv_avx_bsv                   |    1578.45 us|
-|iv_avx_bsv_omp               |      86.51 us|
-|iv_avx_bsv512                |    1581.11 us|
-|iv_avx_bsv512_omp            |      84.66 us|
-|iv_avx_bs                    |    1630.22 us|
-|iv_avx_bs_omp                |      88.39 us|
-|pricer_naive_bsv             |     210.47 us|
-|pricer_naive_bs              |     240.20 us|
-|pricer_avx_bsv               |      91.78 us|
-|pricer_avx_bsv_omp           |       7.87 us|
-|pricer_avx_bsv512            |      93.23 us|
-|pricer_avx_bsv512_omp        |       7.91 us|
-|pricer_avx_bs                |     151.85 us|
-|pricer_avx_bs_omp            |      10.98 us|
-|vol_edge_naive_bsv512        |       4.06 us|
-|vol_edge_naive_bsv           |       3.54 us|
-|vol_edge_naive_bs            |      20.36 us|
-|vol_edge_avx_bsv             |       3.67 us|
-|vol_edge_avx_unrolled_bsv    |       3.51 us|
-|vol_edge_avx_bsv512          |       4.08 us|
-|vol_edge_avx_unrolled_bsv512 |       3.61 us|
-|vol_edge_avx_bs              |      41.64 us|
-|vol_edge_avx_unrolled_bs     |      38.58 us|
+|Benchmark                    |   Time (GCC) |  Time (Clang)|
+|:----------------------------|-------------:|-------------:|
+|iv_naive_bsv                 |   19331.84 us|   20557.84 us|
+|iv_naive_bs                  |   19242.75 us|   20649.10 us|
+|iv_avx_bsv                   |    1578.45 us|    1369.96 us|
+|iv_avx_bsv_omp               |      86.51 us|      70.68 us|
+|iv_avx_bsv512                |    1581.11 us|    1348.78 us|
+|iv_avx_bsv512_omp            |      84.66 us|      71.07 us|
+|iv_avx_bs                    |    1630.22 us|    1429.12 us|
+|iv_avx_bs_omp                |      88.39 us|      76.82 us|
+|pricer_naive_bsv             |     210.47 us|    1060.83 us|
+|pricer_naive_bs              |     240.20 us|    1038.66 us|
+|pricer_avx_bsv               |      91.78 us|      90.40 us|
+|pricer_avx_bsv_omp           |       7.87 us|       7.16 us|
+|pricer_avx_bsv512            |      93.23 us|      87.23 us|
+|pricer_avx_bsv512_omp        |       7.91 us|       7.06 us|
+|pricer_avx_bs                |     151.85 us|     160.10 us|
+|pricer_avx_bs_omp            |      10.98 us|      10.56 us|
+|vol_edge_naive_bsv512        |       4.06 us|       3.75 us|
+|vol_edge_naive_bsv           |       3.54 us|       4.00 us|
+|vol_edge_naive_bs            |      20.36 us|      19.76 us|
+|vol_edge_avx_bsv             |       3.67 us|       4.71 us|
+|vol_edge_avx_unrolled_bsv    |       3.51 us|       4.14 us|
+|vol_edge_avx_bsv512          |       4.08 us|       3.92 us|
+|vol_edge_avx_unrolled_bsv512 |       3.61 us|       3.63 us|
+|vol_edge_avx_bs              |      41.64 us|      41.06 us|
+|vol_edge_avx_unrolled_bs     |      38.58 us|      38.85 us|
 
 ## Analysis
 
@@ -146,6 +146,7 @@ One other thing of note is how across-the-board `bs` is the wrost, but if you ar
 ## Comments
 
 A big takeaway is just look at how much AVXifying your code can help. Single threaded Naive-to-AVX offers a >10x speedup. That's hard to ignore, and if the concept is hard to ignore, then you should consider from the very beginning whether your data structures will hamper your ability to leverage it. It's easy to mistakenly think ahead of time that `bs` would be a good data structure for this purpose. It's simple, and what's more is that by putting all your instrument's data together, you'll get speed ups from the idea that using one piece of data implies a high probability that you will use another, so they'll both be there on the cache line already. That sounds logical to me, but then, when you're SIMD optimizing down the road, or the compiler is trying to SIMD optimize for you, you lose big time, and probably by that point, you've built so many other applications around the `bs` data structure that you cannot go back without incurring a huge expense.
+
 
 ### Footnotes
 
