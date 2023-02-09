@@ -16,6 +16,8 @@
 // compile with: g++ main.cpp -std=c++20 -O3 -lm -lstdc++ -march=native -fopenmp -ffast-math  -lbenchmark -lpthread
 // format with: clang-format main.cpp -i -style=Microsoft
 
+
+
 #define SIZE_N (1600 * 32)
 
 #define BS_UL 0, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120
@@ -663,7 +665,7 @@ BENCHMARK(vol_edge_naive_bsv);
 static void vol_edge_naive_bs(benchmark::State &state)
 {
     std::srand(1);
-    alignas(4096) bs *__restrict__ data = new bs[SIZE_N];
+    alignas(4096) auto data = std::make_unique<bs[]>(SIZE_N);
 
     for (auto i = 0; i < SIZE_N; ++i)
     {
