@@ -34,5 +34,6 @@
 
 # The build files
 data_structures/build/*
+!data_structures/build/.gitkeep
 algorithms/build/*
-build-*/
+!algorithms/build/.gitkeep
