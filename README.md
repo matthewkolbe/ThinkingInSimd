@@ -101,7 +101,7 @@ Although I will not be showing this here, `bsv512` has the additional complicati
 
 I would like to see how all data structures perform in all compute paradigms. Additionally, I would like to see how it performs single threaded versus using 32 threads via OpenMP (OMP). I chose a value of `N=51200` because it's appropriately large for practical uses, and it divides all my partitions evenly. Of note is that `51200*8*4=1.6MB` for the total data operated on, and my processor has 64KB of L1 cache and 1MB of L2 per core. If we want to start exceeding cache, the usefulness of each data structure is bound to change. Long is prefixed with `iv_`, Medium is prefixed with `pricer_` and Short with `vol_edge`. I use [Google Benchmark](https://github.com/google/benchmark) as the microbenchmarking framework. 
 
-To run it create a build folder `mkdir build` and cd into it `cd build`. Then make it with `cmake -DCMAKE_CXX_COMPILER=clang++ ../src` and then `make`. Then run the `ThinkingInSimd` executable.
+To run it create a build folder `mkdir build` and cd into it `cd build`. Then make it with `cmake -DCMAKE_CXX_COMPILER=clang++ ../src` (or whatever compiler you want/have) and then `make`. Then run the `ThinkingInSimd` executable.
 
 Here are the results:
 
