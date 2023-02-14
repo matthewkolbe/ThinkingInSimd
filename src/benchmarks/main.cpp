@@ -1,6 +1,6 @@
 // Copyright 2023 Matthew Kolbe
 #include <benchmark/benchmark.h>
-#include <vectorclass/vectorclass.h>
+#include <vectorclass.h>
 #include <cassert>
 #include <chrono>
 #include <cstdlib>

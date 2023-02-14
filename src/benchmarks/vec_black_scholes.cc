@@ -5,8 +5,8 @@
 
 #include <iostream>
 
-#include "vectorclass/vectorclass.h"
-#include "vectorclass/vectormath_exp.h"
+#include "vectorclass.h"
+#include "vectormath_exp.h"
 
 #define _USE_MATH_DEFINES
 
