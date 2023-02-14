@@ -13,7 +13,6 @@
 #include "black_scholes.cc"
 #include "vec_black_scholes.cc"
 
-// compile with: g++ main.cpp -std=c++20 -O3 -lm -lstdc++ -march=native -fopenmp -ffast-math  -lbenchmark -lpthread
 // format with: clang-format main.cpp -i -style=Microsoft
 
 #define SIZE_N (1600 * 32)
