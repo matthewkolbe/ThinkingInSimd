@@ -6,6 +6,7 @@ cmake_minimum_required (VERSION 3.16)
 project ("ThinkingInSimd")
 
 add_compile_options(
+  -Qunused-arguments
   -std=c++20
   -O3
   -march=native
@@ -15,13 +16,12 @@ add_compile_options(
   -lstdc++
   -lbenchmark
   -lpthread
-  -Wunused-command-line-argument
 )
 
 set(SOURCES
-    benchmarks/main.cpp
-    benchmarks/black_scholes.cc
-    benchmarks/vec_black_scholes.cc
+    src/main.cpp
+    src/black_scholes.cc
+    src/vec_black_scholes.cc
 )
 
 include(FetchContent)
