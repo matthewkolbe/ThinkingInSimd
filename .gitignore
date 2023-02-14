@@ -32,7 +32,6 @@
 *.out
 *.app
 
-# The build file
-build/
-data_structures/build/
-algorithms/build/
+# The build files
+data_structures/build/*
+algorithms/build/*
