@@ -31,3 +31,6 @@
 *.exe
 *.out
 *.app
+
+# The build file
+build/
