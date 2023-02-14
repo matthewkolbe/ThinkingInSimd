@@ -15,6 +15,7 @@ add_compile_options(
   -lstdc++
   -lbenchmark
   -lpthread
+  -Wunused-command-line-argument
 )
 
 set(SOURCES
