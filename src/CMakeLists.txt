@@ -5,26 +5,37 @@ cmake_minimum_required (VERSION 3.11)
 
 project ("ThinkingInSimd")
 
-set( CMAKE_CXX_STANDARD 20)
-set( CMAKE_CXX_STANDARD_REQUIRED YES )
-set( CMAKE_CXX_FLAGS "-O3 -lm -lstdc++ -march=native -fopenmp -ffast-math  -lbenchmark -lpthread")
-
 set(SOURCES
-    src/benchmarks/main.cpp
-    src/benchmarks/black_scholes.cc
-    src/benchmarks/vec_black_scholes.cc
+    benchmarks/main.cpp
+    benchmarks/black_scholes.cc
+    benchmarks/vec_black_scholes.cc
 )
 
 include_directories(
     _deps/vectorclass-src/vectorclass
 )
 
-# Link Google Benchmark to the project
-target_link_libraries(ThinkingInSimd benchmark::benchmark)
-
 # Create the executable
 add_executable(ThinkingInSimd ${SOURCES})
 
+# Link Google Benchmark to the project
+target_link_libraries(ThinkingInSimd benchmark::benchmark)
 
 # Include sub-projects.
 add_subdirectory ("benchmarks")
+
+# Compiler flags
+target_compile_options(ThinkingInSimd PRIVATE
+  -std=c++20
+  -O3
+  -march=native
+  -fopenmp
+  -ffast-math
+)
+
+target_link_libraries(ThinkingInSimd
+  -lm
+  -lstdc++
+  -lbenchmark
+  -lpthread
+)
