@@ -1,3 +1,5 @@
+# In Progress
+
 It's 2023, and the current state of high performance computing (whether it's on x86, ARM or GPUs) has a few overarching principles that guide performance. 
 
 (1) Non-blocking compute is abundant.
@@ -12,7 +14,7 @@ It's 2023, and the current state of high performance computing (whether it's on 
 
 In college-level algorithms analysis, 1-4 get treated as more or less the same. But on modern computing systems, you can do thousands of non-blocking compute operations on 64B of cache data (i.e. 16 int32s) in the same time it takes to pull a single piece of random access data from main memory to cache.
 
-## Example 1: Binary Search on Integers
+## Binary Search on Integers
 
 Binary search is pretty well-regarded, but it does suffer from (4) when data is large enough, but when you can fit the whole data structure into L1, the seemingly random access memory jumps don't cause stalled cycles waiting for data, but the pipeline shouldn't be full, either. A binary search involves a call to view the value at an index (which will probably not be in the register already), a comparison of that value to determine the search direction, and a modification of the search size aand centering before repeating the process. A compare plus two basic arithmatic operations don't fill up a whole 10 insturction pipeline that has to wait one cycle to retreive L1 data.
 

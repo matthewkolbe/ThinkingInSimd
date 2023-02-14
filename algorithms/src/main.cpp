@@ -1,3 +1,5 @@
+// Copyright 2023 Matthew Kolbe
+
 #include <benchmark/benchmark.h>
 #include "avx_binary_search.cc"
 #include <bits/stdc++.h>

@@ -1,3 +1,5 @@
+// Copyright 2023 Matthew Kolbe
+
 #include <vector>
 #include <math.h>
 #include <algorithm>
