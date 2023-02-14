@@ -18,7 +18,11 @@ The biggest problem is that software architecture and API design are mostly not 
 
 That last sentence I think highlights the biggest problem: no one wants to use intrinsics for the sake of using intrinsics. They want to use this new functionality to optimize a computation. To that end, they've probably already been optimizing their computations: heeding their big O's, properly minimizing their cache misses, and inlining/hugepaging/hoisting/unrolling/batching/threading to its fullest extent. These aren't the types of programs that are intuitively organized, and to that end, adding one more effective tool to the mess that doesn't drop in easily for the vast majority of programs is maybe more of a problem than a solution.
 
-I would like to help maybe turn what looks like a problem into a solution.
+I would like to help maybe turn what looks like a problem into a solution. 
+
+## Project organization
+
+This project will be a sort of interactive essay looking into the various ways to change the way you think about software optimization in the presence of AVX intrinsics. There is a folder for each "chapter" in this inquiry: [data_structures](data_structures/) and [algorithms](algorithms/) for now. In general, each section will feature a Google Benchmark to compare non-vectorized and vectorized versions of code. Fair warning in advance, this is about ways to push software optimization as far as possible, and to that end, all the AVX examples involve AVX-512 intrinsics. I know a lot of people don't have processors capable of using those instructions, so the example code won't run on those computers, but the essays can still be read and hopefully enjoyed.
 
 ### Footnotes
 

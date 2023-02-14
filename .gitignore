@@ -34,4 +34,5 @@
 
 # The build file
 build/
-data_structures/build
+data_structures/build/
+algorithms/build/

@@ -1,9 +1,6 @@
-﻿# CMakeList.txt : Top-level CMake project file, do global configuration
-# and include sub-projects here.
-#
-cmake_minimum_required (VERSION 3.16)
+﻿cmake_minimum_required (VERSION 3.16)
 
-project ("ThinkingInSimd")
+project ("data_structures")
 
 add_compile_options(
   -Qunused-arguments
@@ -14,7 +11,6 @@ add_compile_options(
   -ffast-math
   -lm
   -lstdc++
-  -lbenchmark
   -lpthread
 )
 
@@ -42,12 +38,10 @@ FetchContent_MakeAvailable(vectorclass googlebenchmark)
 
 include_directories(${vectorclass_SOURCE_DIR})
 
+add_executable(data_structures ${SOURCES})
 
-# Create the executable
-add_executable(ThinkingInSimd ${SOURCES})
-
-find_package(OpenMP)
-target_link_libraries(ThinkingInSimd 
+find_package(OpenMP REQUIRED)
+target_link_libraries(data_structures 
     benchmark::benchmark
     OpenMP::OpenMP_CXX
 )
