@@ -1,4 +1,4 @@
-# In Progress
+# In Progress 
 
 It's 2023, and the current state of high performance computing (whether it's on x86, ARM or GPUs) has a few overarching principles that guide performance. 
 
