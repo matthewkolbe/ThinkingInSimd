@@ -11,9 +11,7 @@ set(SOURCES
     benchmarks/vec_black_scholes.cc
 )
 
-include_directories(
-    _deps/vectorclass-src/vectorclass
-)
+include_directories(${PROJECT_SOURCE_DIR}/_deps/vectorclass-src)
 
 # Create the executable
 add_executable(ThinkingInSimd ${SOURCES})
