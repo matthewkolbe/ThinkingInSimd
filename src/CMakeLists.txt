@@ -45,4 +45,8 @@ include_directories(${vectorclass_SOURCE_DIR})
 # Create the executable
 add_executable(ThinkingInSimd ${SOURCES})
 
-target_link_libraries(ThinkingInSimd benchmark::benchmark)
+find_package(OpenMP)
+target_link_libraries(ThinkingInSimd 
+    benchmark::benchmark
+    OpenMP::OpenMP_CXX
+)
