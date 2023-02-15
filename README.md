@@ -18,7 +18,9 @@ The biggest problem is that software architecture and API design are mostly not 
 
 That last sentence I think highlights the biggest problem: no one wants to use intrinsics for the sake of using intrinsics. They want to use this new functionality to optimize a computation. To that end, they've probably already been optimizing their computations: heeding their big O's, properly minimizing their cache misses, and inlining/hugepaging/hoisting/unrolling/batching/threading to its fullest extent. These aren't the types of programs that are intuitively organized, and to that end, adding one more effective tool to the mess that doesn't drop in easily for the vast majority of programs is maybe more of a problem than a solution.
 
-I would like to help maybe turn what looks like a problem into a solution. 
+Another problem is that computer scientists haven't classically written algorithms with SIMD in mind. I don't think 30 years ago it was commonly believed that doing the same operation on multiple data would be a useful consideration when designing algorithms. Recently, [Google came out with a SIMD-accelerated quicksort](https://opensource.googleblog.com/2022/06/Vectorized%20and%20performance%20portable%20Quicksort.html), and I think there is a lot of low hanging optimizations to be had by shoehorning in some AVX wherever it can be helpful.
+
+I would like this essay to be a jumping off point for people who don't want to cynically dismiss AVX intrinsics by walking though examples of how thinking about SIMD can offer very significant performance improvements. 
 
 ## Project organization
 
