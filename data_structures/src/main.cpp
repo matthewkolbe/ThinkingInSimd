@@ -1,4 +1,5 @@
 // Copyright 2023 Matthew Kolbe
+
 #include <benchmark/benchmark.h>
 #include <vectorclass.h>
 #include <cassert>
@@ -10,91 +11,17 @@
 #include <omp.h>
 #include <thread>
 
+#include "data_structures.cc"
 #include "black_scholes.cc"
 #include "vec_black_scholes.cc"
+#include "constants.cc"
 
 // format with: clang-format main.cpp -i -style=Microsoft
-
-#define SIZE_N (1600 * 32)
-
-#define BS_UL 0, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120
-#define BS_TTE 1, 9, 17, 25, 33, 41, 49, 57, 65, 73, 81, 89, 97, 105, 113, 121
-#define BS_STRIKE 2, 10, 18, 26, 34, 42, 50, 58, 66, 74, 82, 90, 98, 106, 114, 122
-#define BS_RATE 3, 11, 19, 27, 35, 43, 51, 59, 67, 75, 83, 91, 99, 107, 115, 123
-#define BS_IV 4, 12, 20, 28, 36, 44, 52, 60, 68, 76, 84, 92, 100, 108, 116, 124
-#define BS_VOL 5, 13, 21, 29, 37, 45, 53, 61, 69, 77, 85, 93, 101, 109, 117, 125
-#define BS_PX 6, 14, 22, 30, 38, 46, 54, 62, 70, 78, 86, 94, 102, 110, 118, 126
-#define BS_THEO 7, 15, 23, 31, 39, 47, 55, 63, 71, 79, 87, 95, 103, 111, 119, 127
-
-#define THRD (32)
-
-// these are all standard layout types, so type punning on inactive members is okay?
-union alignas(64) V16 {
-    Vec16f vcl;
-    float array[16];
-    __m512 intr;
-};
-
-struct alignas(32) bs
-{
-  public:
-    float ul, tte, strike, rate, iv, vol, px, theo;
-};
-
-struct alignas(4096) bsv
-{
-  public:
-    bsv()
-    {
-        ul = std::make_unique<float[]>(SIZE_N);
-        tte = std::make_unique<float[]>(SIZE_N);
-        strike = std::make_unique<float[]>(SIZE_N);
-        rate = std::make_unique<float[]>(SIZE_N);
-        vol = std::make_unique<float[]>(SIZE_N);
-        iv = std::make_unique<float[]>(SIZE_N);
-        px = std::make_unique<float[]>(SIZE_N);
-        theo = std::make_unique<float[]>(SIZE_N);
-    }
-
-    std::unique_ptr<float[]> ul;
-    std::unique_ptr<float[]> tte;
-    std::unique_ptr<float[]> strike;
-    std::unique_ptr<float[]> rate;
-    std::unique_ptr<float[]> iv;
-    std::unique_ptr<float[]> vol;
-    std::unique_ptr<float[]> px;
-    std::unique_ptr<float[]> theo;
-};
-
-struct alignas(4096) bsv512
-{
-  public:
-    bsv512()
-    {
-        ul = std::make_unique<V16[]>(SIZE_N);
-        tte = std::make_unique<V16[]>(SIZE_N);
-        strike = std::make_unique<V16[]>(SIZE_N);
-        rate = std::make_unique<V16[]>(SIZE_N);
-        vol = std::make_unique<V16[]>(SIZE_N);
-        iv = std::make_unique<V16[]>(SIZE_N);
-        px = std::make_unique<V16[]>(SIZE_N);
-        theo = std::make_unique<V16[]>(SIZE_N);
-    }
-
-    std::unique_ptr<V16[]> ul;
-    std::unique_ptr<V16[]> tte;
-    std::unique_ptr<V16[]> strike;
-    std::unique_ptr<V16[]> rate;
-    std::unique_ptr<V16[]> iv;
-    std::unique_ptr<V16[]> vol;
-    std::unique_ptr<V16[]> px;
-    std::unique_ptr<V16[]> theo;
-};
 
 static void iv_naive_bsv(benchmark::State &state)
 {
     std::srand(1);
-    bsv data;
+    bsv data(SIZE_N);
 
     for (auto i = 0; i < SIZE_N; ++i)
     {
@@ -154,7 +81,7 @@ BENCHMARK(iv_naive_bs);
 static void iv_avx_bsv(benchmark::State &state)
 {
     std::srand(1);
-    alignas(4096) bsv data;
+    alignas(4096) bsv data(SIZE_N);
 
     for (auto i = 0; i < SIZE_N; ++i)
     {
@@ -189,7 +116,7 @@ BENCHMARK(iv_avx_bsv);
 static void iv_avx_bsv_omp(benchmark::State &state)
 {
     std::srand(1);
-    bsv data;
+    bsv data(SIZE_N);
 
     omp_set_num_threads(THRD);
 
@@ -230,7 +157,7 @@ BENCHMARK(iv_avx_bsv_omp);
 static void iv_avx_bsv512(benchmark::State &state)
 {
     std::srand(1);
-    bsv512 data;
+    bsv512 data(SIZE_N/16);
 
     for (auto i = 0; i < SIZE_N / 16; ++i)
     {
@@ -263,7 +190,7 @@ BENCHMARK(iv_avx_bsv512);
 static void iv_avx_bsv512_omp(benchmark::State &state)
 {
     std::srand(1);
-    bsv512 data;
+    bsv512 data(SIZE_N/16);
 
     omp_set_num_threads(THRD);
 
@@ -380,7 +307,7 @@ BENCHMARK(iv_avx_bs_omp);
 static void pricer_naive_bsv(benchmark::State &state)
 {
     std::srand(1);
-    bsv data;
+    bsv data(SIZE_N);
 
     for (auto i = 0; i < SIZE_N; ++i)
     {
@@ -426,7 +353,7 @@ BENCHMARK(pricer_naive_bs);
 static void pricer_avx_bsv(benchmark::State &state)
 {
     std::srand(1);
-    bsv data;
+    bsv data(SIZE_N);
 
     for (auto i = 0; i < SIZE_N; ++i)
     {
@@ -458,7 +385,7 @@ BENCHMARK(pricer_avx_bsv);
 static void pricer_avx_bsv_omp(benchmark::State &state)
 {
     std::srand(1);
-    bsv data;
+    bsv data(SIZE_N);
 
     omp_set_num_threads(THRD);
 
@@ -493,7 +420,7 @@ BENCHMARK(pricer_avx_bsv_omp);
 static void pricer_avx_bsv512(benchmark::State &state)
 {
     std::srand(1);
-    bsv512 data;
+    bsv512 data(SIZE_N/16);
 
     for (auto i = 0; i < SIZE_N / 16; ++i)
     {
@@ -522,7 +449,7 @@ BENCHMARK(pricer_avx_bsv512);
 static void pricer_avx_bsv512_omp(benchmark::State &state)
 {
     std::srand(1);
-    bsv512 data;
+    bsv512 data(SIZE_N/16);
 
     omp_set_num_threads(THRD);
 
@@ -619,7 +546,7 @@ BENCHMARK(pricer_avx_bs_omp);
 static void vol_edge_naive_bsv512(benchmark::State &state)
 {
     std::srand(1);
-    bsv512 data;
+    bsv512 data(SIZE_N/16);
 
     for (auto i = 0; i < SIZE_N / 16; ++i)
     {
@@ -642,7 +569,7 @@ BENCHMARK(vol_edge_naive_bsv512);
 static void vol_edge_naive_bsv(benchmark::State &state)
 {
     std::srand(1);
-    bsv data;
+    bsv data(SIZE_N);
 
     for (auto i = 0; i < SIZE_N; ++i)
     {
@@ -652,7 +579,6 @@ static void vol_edge_naive_bsv(benchmark::State &state)
 
     for (auto _ : state)
     {
-
         for (auto i = 0; i < SIZE_N; ++i)
             data.theo[i] = std::abs(data.iv[i] - data.vol[i]);
     }
@@ -672,7 +598,6 @@ static void vol_edge_naive_bs(benchmark::State &state)
 
     for (auto _ : state)
     {
-
         for (auto i = 0; i < SIZE_N; ++i)
             data[i].theo = std::abs(data[i].iv - data[i].vol);
     }
@@ -682,7 +607,7 @@ BENCHMARK(vol_edge_naive_bs);
 static void vol_edge_avx_bsv(benchmark::State &state)
 {
     std::srand(1);
-    bsv data;
+    bsv data(SIZE_N);
 
     for (auto i = 0; i < SIZE_N; ++i)
     {
@@ -702,7 +627,7 @@ BENCHMARK(vol_edge_avx_bsv);
 static void vol_edge_avx_unrolled_bsv(benchmark::State &state)
 {
     std::srand(1);
-    bsv data;
+    bsv data(SIZE_N);
 
     for (auto i = 0; i < SIZE_N; ++i)
     {
@@ -771,7 +696,7 @@ BENCHMARK(vol_edge_avx_unrolled_bsv);
 static void vol_edge_avx_bsv512(benchmark::State &state)
 {
     std::srand(1);
-    bsv512 data;
+    bsv512 data(SIZE_N/16);
 
     for (auto i = 0; i < SIZE_N / 16; ++i)
     {
@@ -791,7 +716,7 @@ BENCHMARK(vol_edge_avx_bsv512);
 static void vol_edge_avx_unrolled_bsv512(benchmark::State &state)
 {
     std::srand(1);
-    bsv512 data;
+    bsv512 data(SIZE_N/16);
 
     for (auto i = 0; i < SIZE_N / 16; ++i)
     {
@@ -949,7 +874,7 @@ BENCHMARK(random_writes_bs);
 static void random_writes_bsv(benchmark::State &state)
 {
     std::srand(1);
-    bsv data;
+    bsv data(SIZE_N);
     alignas(64) auto ind = std::make_unique<size_t[]>(SIZE_N);
 
     for (auto i = 0; i < SIZE_N; ++i)

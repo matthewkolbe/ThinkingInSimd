@@ -18,6 +18,8 @@ set(SOURCES
     src/main.cpp
     src/black_scholes.cc
     src/vec_black_scholes.cc
+    src/data_structures.cc
+    src/constants.cc
 )
 
 include(FetchContent)
