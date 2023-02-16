@@ -26,6 +26,8 @@ inline __attribute__((always_inline)) std::size_t index_match(const short* v, co
 
         // get the aligned index
         midi &= 0xFFFFFFE0;
+
+        // no aligned load for shorts?
         vv = _mm512_loadu_epi16(v + midi);
         eqmask = _mm512_cmp_epi16_mask(vv, f, _MM_CMPINT_EQ);
         if(eqmask != 0) 
@@ -90,7 +92,7 @@ inline __attribute__((always_inline)) std::size_t index_match(const long long* v
 
         // get the aligned index
         midi &= 0xFFFFFFF8;
-        vv = _mm512_loadu_epi64(v + midi);
+        vv = _mm512_load_epi64(v + midi);
         eqmask = _mm512_cmp_epi64_mask(vv, f, _MM_CMPINT_EQ);
         if(eqmask != 0)
             return midi + ffs(eqmask) - 1;
