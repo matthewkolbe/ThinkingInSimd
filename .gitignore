@@ -37,3 +37,5 @@ data_structures/build/*
 !data_structures/build/.gitkeep
 algorithms/build/*
 !algorithms/build/.gitkeep
+optimization/build/*
+!optimization/build/.gitkeep
