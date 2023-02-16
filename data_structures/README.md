@@ -121,9 +121,9 @@ CPU Caches:
 
 ## Analysis
 
-`bsv` and `bsv512` seem to be nearly the same[^3], with the exeption being that autovectorization works much better with `bsv`. Notice how much manutal effort it took to unroll/reorder `bsv512` for the Short (vol_edge_*) cases just to make it match the autovectorized version.
+`bsv` and `bsv512` seem to be nearly the same[^3], with the exception being that autovectorization works much better with `bsv`. Notice how much manual effort it took to unroll/reorder `bsv512` for the Short (vol_edge_*) cases just to make it match the autovectorized version.
 
-One other thing of note is how across-the-board `bs` is the wrost, but if you are only doing Long calculations, then maybe other qualities of the data struture could make it the best to use. But when you're doing Short or Medium calculations, `scatter` and `gather` combined with cache thrashing is just too much overhead. Even when you use `bs` naively, the results are bad, because the compiler cannot autovectorize it easily.
+One other thing of note is how across-the-board `bs` is the worst, but if you are only doing Long calculations, then maybe other qualities of the data structure could make it the best to use. But when you're doing Short or Medium calculations, `scatter` and `gather` combined with cache thrashing is just too much overhead. Even when you use `bs` naively, the results are bad, because the compiler cannot autovectorize it easily.
 
 ## Comments
 
@@ -132,7 +132,7 @@ A big takeaway is just look at how much AVXifying your code can help. Single thr
 
 ### Footnotes
 
-[^1]: This will be calculating the inverse of the Black-Scholes option price with respect to its volatility parameter, and [you can read about Black-Scholes here](http://www.iam.fmph.uniba.sk/institute/stehlikova/fd14en/lectures/06_black_scholes_2.pdf). Aside from the formula itself being non-trival, with calls to the ERF function, it's not analytically invertible, and it's best to use a bisection root finder to solve instead. 
+[^1]: This will be calculating the inverse of the Black-Scholes option price with respect to its volatility parameter, and [you can read about Black-Scholes here](http://www.iam.fmph.uniba.sk/institute/stehlikova/fd14en/lectures/06_black_scholes_2.pdf). Aside from the formula itself being non-trivial, with calls to the ERF function, it's not analytically invertible, and it's best to use a bisection root finder to solve instead. 
 
 [^2]: This will be calculating an option's value in the Black-Scholes formula.
 

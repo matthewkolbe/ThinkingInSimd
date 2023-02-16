@@ -8,7 +8,7 @@ It's 2023, and the current state of high performance computing (whether it's on 
 
 (3) Data in the closest cache is really cheap to read.
 
-(4) Data becomes increasingly expensive and lower bandwith the "farther" it is from the register.
+(4) Data becomes increasingly expensive and lower bandwidth the "farther" it is from the register.
 
 (5) Doing the same operation on a cache line data is almost free (SIMD/warps)
 
@@ -18,7 +18,7 @@ But this is a project dedicated to SIMD acceleration, so let's take a look at ho
 
 ## Binary Search on Integers
 
-In the data_structures example, I showed an example of how binary search (the root finding version of the algorithm) could be vectorized. It's not a particularly clever version of vectorization, because its vectorization was dependent on there being 16 different binary searches that needed to happen at the same time. What happens if we only need one done? This is where I think being knowledgable of hardware and the particulars of AVX intrinsics can really shine. 
+In the data_structures example, I showed an example of how binary search (the root finding version of the algorithm) could be vectorized. It's not a particularly clever version of vectorization, because its vectorization was dependent on there being 16 different binary searches that needed to happen at the same time. What happens if we only need one done? This is where I think being knowledgeable of hardware and the particulars of AVX intrinsics can really shine. 
 
 What if I proposed doing a linear search of 16 integers every single iteration of the binary search? It sounds silly, right? Well, it would be silly to do as a length 16 loop comparing all the values, but AVX-512 comes equipped with an intrinsic (`_mm512_cmp_epi32_mask`) to compare 16 integers against 16 integers in one operation. It's a little slower than calling `==`, but not much slower. [src/avx_binary_search.cc](src/avx_binary_search.cc) implements this concept. One little thing to make sure of is that you only call `_mm512_cmp_epi32_mask` on the single aligned 64B chunk that contains the value you want to test, or else this operation gets much more expensive[^1].
 
