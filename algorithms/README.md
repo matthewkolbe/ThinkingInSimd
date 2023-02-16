@@ -24,7 +24,7 @@ What if I proposed doing a linear search of 16 integers every single iteration o
 
 ## The test
 
-I run a [Google Benchmark](https://github.com/google/benchmark) comparing the aforementioned algorithm to `std::lower_bound`.  I vary the input sizes from 7 to 262144. After that perfornace starts to degrade relative to `std::lower_bound` as the size exceeds my L2 and other memory considerations start to take over.
+I run a [Google Benchmark](https://github.com/google/benchmark) comparing the aforementioned algorithm to `std::lower_bound`.  I vary the input sizes from 7 to 67,108,864. 
 
 Run on (32 X 5881 MHz CPU s)
 
@@ -34,22 +34,22 @@ CPU Caches:
 - L2 Unified 1024 KiB (x16)
 - L3 Unified 32768 KiB (x2)
 
-|Array Size       |         AVX   |    std::lower_bound |
-|:----------------|--------------:|--------:|
-| 7           |      3.58 ns  |    10.3 ns |
-| 15          |      7.69 ns  |    28.5 ns |
-| 83          |       129 ns  |     258 ns |
-| 503         |      1,646 ns  |    2,603 ns |
-| 1031        |      4,298 ns  |    5,604 ns |
-| 2048        |     10,137 ns  |   11,577 ns |
-| 4096        |     23,589 ns  |   51,022 ns |
-| 8192        |     53,560 ns  |  135,986 ns |
-| 16384       |    121,045 ns  |  364,385 ns |
-| 32768       |    273,431 ns  |  749,288 ns |
-| 65536       |    669,157 ns  | 1,498,834 ns |
-| 131072      |   1,476,971 ns  | 2,792,282 ns |
-| 262144      |   3,170,675 ns  | 5,395,945 ns |
+|Array Size       |           AVX   |    std::lower_bound |
+|:----------------|----------------:|--------:|
+| 7               |        3.61 ns  |         10.6 ns | 
+| 15              |        7.73 ns  |         28.6 ns |
+| 83              |         123 ns  |          335 ns |
+| 256             |         620 ns  |        1,523 ns |
+| 503             |       1,557 ns  |        3,065 ns |
+| 1,024           |       3,787 ns  |        6,513 ns |
+| 4,096           |      20,124 ns  |       49,306 ns |
+| 16,384          |     105,277 ns  |      366,247 ns |
+| 65,536          |     572,036 ns  |    1,334,993 ns |
+| 1,048,576       |       13.31 ms  |        19.99 ms |
+| 16,777,216      |      346.39 ms  |       390.61 ms |
+| 67,108,864      |    1,767.96 ms  |     1,766.38 ms |
 
+AVX kicks the STL's ass until memory access constraints start to take over. 
 
 ## Footnotes
 
