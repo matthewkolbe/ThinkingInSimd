@@ -2,6 +2,28 @@
 
 #include <vectorclass.h>
 #include <memory>
+#include <new>
+
+
+template<class T>
+struct DeleteAligned
+{
+    void operator()(T * data) const
+    {
+        free(data);
+    }
+};
+
+
+template<class T>
+std::unique_ptr<T[], DeleteAligned<T>> allocate_aligned(int alignment, const size_t length)
+{
+    // omitted: check minimum alignment, check error
+    T * raw = 0;
+    // using posix_memalign as an example, could be made platform dependent...
+    int error = posix_memalign((void **)&raw, alignment, sizeof(T)*length);
+    return std::unique_ptr<T[], DeleteAligned<T>>{raw};
+}
 
 
 // these are all standard layout types, so type punning on inactive members is okay?
@@ -22,24 +44,24 @@ struct alignas(4096) bsv
   public:
     bsv(const size_t & n)
     {
-        ul = std::make_unique<float[]>(n);
-        tte = std::make_unique<float[]>(n);
-        strike = std::make_unique<float[]>(n);
-        rate = std::make_unique<float[]>(n);
-        vol = std::make_unique<float[]>(n);
-        iv = std::make_unique<float[]>(n);
-        px = std::make_unique<float[]>(n);
-        theo = std::make_unique<float[]>(n);
+        ul =      allocate_aligned<float>(64, n);
+        tte =     allocate_aligned<float>(64, n);
+        strike =  allocate_aligned<float>(64, n);
+        rate =    allocate_aligned<float>(64, n);
+        vol =     allocate_aligned<float>(64, n);
+        iv =      allocate_aligned<float>(64, n);
+        px =      allocate_aligned<float>(64, n);
+        theo =    allocate_aligned<float>(64, n);
     }
 
-    std::unique_ptr<float[]> ul;
-    std::unique_ptr<float[]> tte;
-    std::unique_ptr<float[]> strike;
-    std::unique_ptr<float[]> rate;
-    std::unique_ptr<float[]> iv;
-    std::unique_ptr<float[]> vol;
-    std::unique_ptr<float[]> px;
-    std::unique_ptr<float[]> theo;
+    std::unique_ptr<float[], DeleteAligned<float>> ul;
+    std::unique_ptr<float[], DeleteAligned<float>> tte;
+    std::unique_ptr<float[], DeleteAligned<float>> strike;
+    std::unique_ptr<float[], DeleteAligned<float>> rate;
+    std::unique_ptr<float[], DeleteAligned<float>> iv;
+    std::unique_ptr<float[], DeleteAligned<float>> vol;
+    std::unique_ptr<float[], DeleteAligned<float>> px;
+    std::unique_ptr<float[], DeleteAligned<float>> theo;
 };
 
 struct alignas(4096) bsv512
@@ -47,22 +69,22 @@ struct alignas(4096) bsv512
   public:
     bsv512(const size_t & n)
     {
-        ul = std::make_unique<V16[]>(n);
-        tte = std::make_unique<V16[]>(n);
-        strike = std::make_unique<V16[]>(n);
-        rate = std::make_unique<V16[]>(n);
-        vol = std::make_unique<V16[]>(n);
-        iv = std::make_unique<V16[]>(n);
-        px = std::make_unique<V16[]>(n);
-        theo = std::make_unique<V16[]>(n);
+        ul =      allocate_aligned<V16>(64, n);
+        tte =     allocate_aligned<V16>(64, n);
+        strike =  allocate_aligned<V16>(64, n);
+        rate =    allocate_aligned<V16>(64, n);
+        vol =     allocate_aligned<V16>(64, n);
+        iv =      allocate_aligned<V16>(64, n);
+        px =      allocate_aligned<V16>(64, n);
+        theo =    allocate_aligned<V16>(64, n);
     }
 
-    std::unique_ptr<V16[]> ul;
-    std::unique_ptr<V16[]> tte;
-    std::unique_ptr<V16[]> strike;
-    std::unique_ptr<V16[]> rate;
-    std::unique_ptr<V16[]> iv;
-    std::unique_ptr<V16[]> vol;
-    std::unique_ptr<V16[]> px;
-    std::unique_ptr<V16[]> theo;
+    std::unique_ptr<V16[], DeleteAligned<V16>> ul;
+    std::unique_ptr<V16[], DeleteAligned<V16>> tte;
+    std::unique_ptr<V16[], DeleteAligned<V16>> strike;
+    std::unique_ptr<V16[], DeleteAligned<V16>> rate;
+    std::unique_ptr<V16[], DeleteAligned<V16>> iv;
+    std::unique_ptr<V16[], DeleteAligned<V16>> vol;
+    std::unique_ptr<V16[], DeleteAligned<V16>> px;
+    std::unique_ptr<V16[], DeleteAligned<V16>> theo;
 };
