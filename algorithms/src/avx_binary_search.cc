@@ -10,7 +10,7 @@
 
 inline __attribute__((always_inline)) std::size_t index_match(const short* v, const std::size_t & n, const short & find)
 {
-    if(__builtin_expect(0==n,0)) {return 0;}
+    if(n==0) {return 0;}
 
     auto f = _mm512_set1_epi16(find);
     std::size_t lo = 0;
@@ -45,7 +45,7 @@ inline __attribute__((always_inline)) std::size_t index_match(const short* v, co
 
 inline __attribute__((always_inline)) std::size_t index_match(const int * __restrict v, const std::size_t & n, const int & find)
 {
-    if(__builtin_expect(0==n,0)) {return 0;}
+    if(n==0) {return 0;}
 
     const __m512i f = _mm512_set1_epi32(find);
     std::size_t lo = 0;
@@ -76,7 +76,7 @@ inline __attribute__((always_inline)) std::size_t index_match(const int * __rest
 
 inline __attribute__((always_inline)) std::size_t index_match(const long long* v, const std::size_t & n, const long long & find)
 {
-    if(__builtin_expect(0==n,0)) {return 0;}
+    if(n==0) {return 0;}
 
     auto f = _mm512_set1_epi64(find);
     std::size_t lo = 0;
