@@ -12,19 +12,22 @@ But if you venture into the world of manually applying intrinsic functions, they
 
 I'm not going to answer this. But [here's a good C++ reference](http://const.me/articles/simd/simd.pdf) and [here for C#](https://devblogs.microsoft.com/dotnet/hardware-intrinsics-in-net-core/).
 
-## What's the problem?
+## SIMD **IS** Important
 
-The biggest problem is that software architecture and API design are mostly not organized in a ways that easily take advantage of SIMD instruction sets. Ask yourself how often your programs have contiguous arrays of `intXX`/`floatXX` values that need to be transformed? If you're in scientific computing, it's probably often. But for most people, they probably have a contiguous set of `struct` or `class` types, and even if they want to do a very SIMD friendly operation on a data member of each, the data structure will not easily accommodate it, and transforming the data structure can potentially cost more than any gains from vectorizing the computation anyway.
+Despite Linus's misgivings about autovectorization, it's becoming increasingly evident that these instruction sets are both important now, and that computing architectures in the future will rely more heavily on them to increase efficiency as well.
 
-That last sentence I think highlights the biggest problem: no one wants to use intrinsics for the sake of using intrinsics. They want to use this new functionality to optimize a computation. To that end, they've probably already been optimizing their computations: heeding their big O's, properly minimizing their cache misses, and inlining/hugepaging/hoisting/unrolling/batching/threading to its fullest extent. These aren't the types of programs that are intuitively organized, and to that end, adding one more effective tool to the mess that doesn't drop in easily for the vast majority of programs is maybe more of a problem than a solution.
+The purpose of this essay is to convince you that ignoring the benefits of using intrinsics and vectorized libraries to improve your applications can leave you with drastically underperforming code. There are many valid complaints you'll find, especially with the AVX512 instruction set: they need to be "warm" to actually be fast, the CPU will throttle itself because they heat the unit more, and many of the problems it solves are memory-bound anyway. None of these complaints are wrong, but there are plenty of places where it offers computational speed unattainable without them, so don't let the cynics drown them out.
 
-Another problem is that computer scientists haven't classically written algorithms with SIMD in mind. I don't think 30 years ago it was commonly believed that doing the same operation on multiple data would be a useful consideration when designing algorithms. Recently, [Google came out with a SIMD-accelerated quicksort](https://opensource.googleblog.com/2022/06/Vectorized%20and%20performance%20portable%20Quicksort.html), and I think there is a lot of low hanging optimizations to be had by shoehorning in some AVX wherever it can be helpful.
+Already we have interesting things like [Google coming out with a SIMD-accelerated quicksort](https://opensource.googleblog.com/2022/06/Vectorized%20and%20performance%20portable%20Quicksort.html), [simd](https://github.com/simdjson/simdjson), a JSON parser that offers unmatched performance, and several math libraries like Agner Fog's [vector class library](https://github.com/vectorclass/version2)(which I will be using in some example), the Intel MKL, and [SLEEF](https://github.com/shibatch/sleef).
 
-I would like this essay to be a jumping off point for people who don't want to cynically dismiss AVX intrinsics by walking though examples of how thinking about SIMD can offer very significant performance improvements. 
+The first example is [data_structures](data_structures/), because SIMD can be severely kneecapped if you do not use correct data structures as a foundation.
 
-## Project organization
+The second is [algorithms](algorithms/), showing how vectorization can be shoehorned into common algorithms. 
 
-This project will be a sort of interactive essay looking into the various ways to change the way you think about software optimization in the presence of AVX intrinsics. There is a folder for each "chapter" in this inquiry: [data_structures](data_structures/) and [algorithms](algorithms/) for now. In general, each section will feature a Google Benchmark to compare non-vectorized and vectorized versions of code. Fair warning in advance, this is about ways to push software optimization as far as possible, and to that end, all the AVX examples involve AVX-512 intrinsics. I know a lot of people don't have processors capable of using those instructions, so the example code won't run on those computers, but the essays can still be read and hopefully enjoyed.
+The third is [optimization](optimization/), which is TBD.
+
+In general, each section will feature a Google Benchmark to compare non-vectorized and vectorized versions of code. Fair warning in advance, this is about ways to push software optimization as far as possible, and to that end, all the AVX examples involve AVX-512 intrinsics. I know a lot of people don't have processors capable of using those instructions, so the example code won't run on those computers, but the essays can still be read and hopefully enjoyed.
+
 
 ### Footnotes
 
