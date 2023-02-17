@@ -49,7 +49,13 @@ CPU Caches:
 | 16,777,216      |      346.39 ms  |       390.61 ms |
 | 67,108,864      |    1,767.96 ms  |     1,766.38 ms |
 
-AVX kicks the STL's ass until memory access constraints start to take over. 
+## Analysis
+
+AVX kicks the STL's ass until memory access constraints start to take over. Pretty nifty, huh?
+
+You could ask, "why would I ever have a sorted list in integers that I need to search?" I don't really know. I use hashing lookups for everything myself, but searching "std::lower_bound" returns 617,628 code results on GitHub right now.
+
+This code may give serious speed up, but it comes with down sides. The generic form of `std::lower_bound` is actually simpler than just the int type of the AVX accelerated algorithm. Additionally AVXifying your code will really only be able to accelerate arrays of integral and floating point data types. But across-the-board acceleration with 3x peak? Nothing to sneeze at. 
 
 ## Footnotes
 
