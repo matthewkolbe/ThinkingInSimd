@@ -12,7 +12,7 @@ But if you venture into the world of manually applying intrinsic functions, they
 
 I'm not going to answer this. But [here's a good C++ reference](http://const.me/articles/simd/simd.pdf) and [here for C#](https://devblogs.microsoft.com/dotnet/hardware-intrinsics-in-net-core/).
 
-## SIMD **IS** Important
+## But SIMD is Important
 
 Despite Linus's misgivings about autovectorization, it's becoming increasingly evident that these instruction sets are both important now, and that computing architectures in the future will rely more heavily on them to increase efficiency as well.
 
