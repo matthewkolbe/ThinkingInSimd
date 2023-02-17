@@ -1,5 +1,7 @@
 ﻿cmake_minimum_required (VERSION 3.16)
 
+set(CMAKE_CXX_COMPILER clang++)
+
 project ("data_structures")
 
 add_compile_options(
