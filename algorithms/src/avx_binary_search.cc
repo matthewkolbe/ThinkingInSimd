@@ -43,6 +43,33 @@ inline __attribute__((always_inline)) std::size_t index_match(const short* v, co
     return vec_n + ffs(eqmask) - 1;
 }
 
+inline __attribute__((always_inline)) __m512i bulk_index_match(const int * __restrict v, const int & n, const __m512i & find) {
+    if(n==0) {return _mm512_setzero_epi32();}
+
+    __m512i one = _mm512_set1_epi32(1);
+    __m512i delta = _mm512_set1_epi32(n / 2);
+    __m512i midi = delta;
+    
+    __mmask16 eqmask, ltmask;
+    __m512i vv;
+
+    while(true) {
+        delta = _mm512_srli_epi32(delta, 1);
+        vv = _mm512_i32gather_epi32(midi, v, 4);
+        eqmask = _mm512_cmp_epi32_mask(vv, find, _MM_CMPINT_EQ);
+        delta = _mm512_max_epi32(delta, one);
+
+        if(eqmask == 65535)
+            return midi;
+
+        ltmask = _mm512_cmp_epi32_mask(find, vv, _MM_CMPINT_LT);
+
+        midi = _mm512_mask_add_epi32(midi, ~(ltmask | eqmask), delta, midi);
+        midi = _mm512_mask_sub_epi32(midi, ltmask, midi, delta);
+        
+    }
+}
+
 inline __attribute__((always_inline)) std::size_t index_match(const int * __restrict v, const std::size_t & n, const int & find)
 {
     if(n==0) {return 0;}
