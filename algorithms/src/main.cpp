@@ -26,6 +26,15 @@ static void avx_full(benchmark::State &state) {
             benchmark::DoNotOptimize(match);
         }
     }
+
+    for(int i = 0; i + 15 < n; i+=16) {
+            auto l = _mm512_loadu_epi32(lkup + i);
+            match = bulk_index_match(v, n, l);
+            int mtch[16];
+            _mm512_storeu_epi32(mtch, match);
+            for(int j = 0; j < 16; ++j)
+                assert(lkup[i + j] == mtch[j]);
+        }
     
     ::operator delete[] (v, std::align_val_t(64));
     ::operator delete[] (lkup, std::align_val_t(64));
@@ -68,11 +77,9 @@ static void avx(benchmark::State &state) {
     ::operator delete[] (v, std::align_val_t(64));
     ::operator delete[] (lkup, std::align_val_t(64));
 }
-BENCHMARK(avx)->Args({7})
-              ->Args({15})
-              ->Args({83})
+BENCHMARK(avx)->Args({16})
+              ->Args({64})
               ->Args({256})
-              ->Args({503})
               ->Args({1<<10})
               ->Args({1<<12})
               ->Args({1<<14})
@@ -105,12 +112,9 @@ static void stl(benchmark::State &state) {
     ::operator delete[] (v, std::align_val_t(64));
     ::operator delete[] (lkup, std::align_val_t(64));
 }
-BENCHMARK(stl)->Args({7})
-              ->Args({15})
+BENCHMARK(stl)->Args({16})
               ->Args({64})
-              ->Args({83})
               ->Args({256})
-              ->Args({503})
               ->Args({1<<10})
               ->Args({1<<12})
               ->Args({1<<14})

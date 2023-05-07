@@ -39,3 +39,5 @@ algorithms/build/*
 !algorithms/build/.gitkeep
 optimization/build/*
 !optimization/build/.gitkeep
+hash/build/*
+!hash/build/.gitkeep
